@@ -19,13 +19,23 @@ class WhatsappConnection extends Model
 
     public const STATUS_DISCONNECTED = 'disconnected';
 
-    protected $fillable = ['base_url', 'instance', 'api_key', 'status', 'number', 'checked_at'];
+    protected $fillable = [
+        'base_url', 'instance', 'api_key', 'status', 'number', 'checked_at',
+        /*
+         * Vêm do servidor, nunca de formulário — mas precisam ser atribuíveis
+         * para o cliente guardá-los ao criar ou adotar a instância. Sem isto,
+         * a atribuição era descartada em silêncio e o token nunca era salvo.
+         */
+        'instance_token', 'instance_id',
+    ];
 
     protected function casts(): array
     {
         return [
             // Cifrada em repouso: a chave abre o servidor inteiro.
             'api_key' => 'encrypted',
+            // O token da instancia abre o envio de mensagem: vale tanto quanto a chave.
+            'instance_token' => 'encrypted',
             'checked_at' => 'datetime',
         ];
     }

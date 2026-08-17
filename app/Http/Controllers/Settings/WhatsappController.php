@@ -46,6 +46,16 @@ class WhatsappController extends Controller
 
         $connection = WhatsappConnection::current() ?? new WhatsappConnection;
 
+        /*
+         * Trocar o servidor ou o nome da instância invalida o token guardado:
+         * ele pertence a uma instância específica de um servidor específico.
+         * Mantê-lo faria as chamadas seguintes falharem com 401 sem explicação.
+         */
+        if ($connection->exists && ($connection->base_url !== $data['base_url'] || $connection->instance !== $data['instance'])) {
+            $connection->instance_token = null;
+            $connection->instance_id = null;
+        }
+
         $connection->base_url = $data['base_url'];
         $connection->instance = $data['instance'];
 

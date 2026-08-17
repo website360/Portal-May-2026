@@ -67,15 +67,42 @@ export default function Whatsapp({ connection }: { connection: Connection | null
         };
     }, [qr]);
 
+    /**
+     * Pede o QR e insiste enquanto o servidor responder "ainda estou abrindo a
+     * sessão".
+     *
+     * O Evolution Go leva alguns segundos entre aceitar a conexão e ter o
+     * código pronto. Desistir na primeira resposta faria o botão parecer
+     * quebrado justo quando bastava esperar.
+     */
     async function gerarQr() {
         setCarregando(true);
         setAviso(null);
+        setQr(null);
 
-        const resposta = await fetch(route('configuracoes.whatsapp.qrcode'), { headers: { Accept: 'application/json' } });
-        const dados = await resposta.json();
+        for (let tentativa = 1; tentativa <= 12; tentativa++) {
+            const resposta = await fetch(route('configuracoes.whatsapp.qrcode'), { headers: { Accept: 'application/json' } });
+            const dados = await resposta.json();
 
-        setQr(dados.qr ?? null);
-        setAviso(dados.message);
+            if (dados.qr) {
+                setQr(dados.qr);
+                setAviso(dados.message);
+                setCarregando(false);
+                return;
+            }
+
+            // Falhou de verdade, ou já está pareado e não há QR a mostrar.
+            if (!dados.ok || dados.state !== 'pending') {
+                setAviso(dados.message);
+                setCarregando(false);
+                return;
+            }
+
+            setAviso(`${dados.message} (${tentativa}/12)`);
+            await new Promise((r) => setTimeout(r, 2500));
+        }
+
+        setAviso('O servidor aceitou a conexão mas não gerou o código. Verifique o Evolution Go.');
         setCarregando(false);
     }
 

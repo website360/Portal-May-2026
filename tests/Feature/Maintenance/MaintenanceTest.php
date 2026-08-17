@@ -470,10 +470,11 @@ class MaintenanceTest extends TestCase
             'base_url' => 'https://evolution.exemplo.com.br',
             'instance' => 'agencia-may',
             'api_key' => 'chave',
+            'instance_token' => 'token-da-instancia',
             'status' => WhatsappConnection::STATUS_CONNECTED,
         ]);
 
-        Http::fake(['*/message/sendText/*' => Http::response(['key' => ['id' => 'A']], 201)]);
+        Http::fake(['*/send/text' => Http::response(['key' => ['id' => 'A']], 201)]);
 
         $cliente = Client::factory()->create(['phone' => '(11) 98888-7777']);
         $plano = $this->plano(['client_id' => $cliente->id]);
@@ -515,6 +516,7 @@ class MaintenanceTest extends TestCase
             'base_url' => 'https://evolution.exemplo.com.br',
             'instance' => 'agencia-may',
             'api_key' => 'chave',
+            'instance_token' => 'token-da-instancia',
             'status' => WhatsappConnection::STATUS_CONNECTED,
         ]);
 
@@ -536,10 +538,11 @@ class MaintenanceTest extends TestCase
             'base_url' => 'https://evolution.exemplo.com.br',
             'instance' => 'agencia-may',
             'api_key' => 'chave',
+            'instance_token' => 'token-da-instancia',
             'status' => WhatsappConnection::STATUS_CONNECTED,
         ]);
 
-        Http::fake(['*/message/sendText/*' => Http::response([], 201)]);
+        Http::fake(['*/send/text' => Http::response([], 201)]);
 
         $cliente = Client::factory()->create(['phone' => '(11) 98888-7777']);
         $plano = $this->plano(['client_id' => $cliente->id]);
