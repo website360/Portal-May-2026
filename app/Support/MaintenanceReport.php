@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Models\Maintenance;
 use App\Models\WhatsappConnection;
+use Illuminate\Support\Str;
 
 /**
  * O relatório que o cliente recebe no WhatsApp quando a manutenção é concluída.
@@ -59,43 +60,116 @@ final class MaintenanceReport
     /**
      * O texto do relatório.
      *
-     * "Pular" não aparece: para o cliente, um item pulado seria ruído — ele não
-     * foi avaliado, então não há o que relatar. Fica na tela interna, que é onde
-     * serve para alguém retomar.
+     * Quem manda no texto é o modelo cadastrado em Configurações › Mensagens.
+     * Sem nenhum que sirva, sai o padrão embutido abaixo — o relatório não
+     * pode depender de alguém ter lembrado de cadastrar um modelo.
      */
     public function text(): string
     {
+        return MessageComposer::compose(
+            MessageTriggers::MAINTENANCE_DONE,
+            $this->variables(),
+            $this->facts(),
+            $this->defaultText(),
+        )['text'];
+    }
+
+    /**
+     * O que os marcadores do texto valem nesta manutenção.
+     *
+     * @return array<string, string>
+     */
+    public function variables(): array
+    {
         $plan = $this->maintenance->plan;
         $client = $plan->client;
+        $performed = $this->maintenance->performed_at;
 
-        $greeting = filled($client->contact_name) ? "Olá, {$client->contact_name}!" : 'Olá!';
-
-        $lines = [
-            '*Relatório de Manutenção* — Agência May',
-            '',
-            $greeting,
-            "Concluímos a manutenção preventiva do site *{$plan->site_url}* em ".$this->maintenance->performed_at->format('d/m/Y').'.',
-            '',
+        return [
+            'cliente.nome' => (string) $client->name,
+            'cliente.contato' => (string) $client->contact_name,
+            'cliente.primeiro_nome' => Str::before(trim((string) $client->contact_name), ' '),
+            'site.url' => (string) $plan->site_url,
+            'manutencao.data' => $performed->format('d/m/Y'),
+            'manutencao.mes' => $performed->translatedFormat('F'),
+            'manutencao.itens' => implode("\n", $this->reportedItems()),
+            'manutencao.observacoes' => (string) $this->maintenance->notes,
+            'agencia.nome' => 'Agência May',
         ];
+    }
+
+    /**
+     * O que as regras podem perguntar sobre esta manutenção.
+     *
+     * @return array<string, mixed>
+     */
+    public function facts(): array
+    {
+        $items = $this->maintenance->items ?? [];
+        $contar = fn (string $result) => count(array_filter($items, fn ($item) => ($item['result'] ?? null) === $result));
+
+        return [
+            'itens_feitos' => $contar(MaintenanceChecklist::DONE),
+            'itens_nao_necessarios' => $contar(MaintenanceChecklist::NOT_NEEDED),
+            'tem_observacoes' => filled($this->maintenance->notes),
+            'cliente' => (string) $this->maintenance->plan->client->name,
+            'site' => (string) $this->maintenance->plan->site_url,
+            'mes' => (int) $this->maintenance->performed_at->format('n'),
+        ];
+    }
+
+    /**
+     * As linhas do checklist que o cliente vê.
+     *
+     * "Pular" não aparece: para o cliente, um item pulado seria ruído — ele não
+     * foi avaliado, então não há o que relatar. Fica na tela interna, que é onde
+     * serve para alguém retomar.
+     *
+     * @return list<string>
+     */
+    private function reportedItems(): array
+    {
+        $lines = [];
 
         foreach ($this->maintenance->items ?? [] as $item) {
-            $lines[] = match ($item['result'] ?? null) {
+            $line = match ($item['result'] ?? null) {
                 MaintenanceChecklist::DONE => "✅ {$item['label']}",
                 MaintenanceChecklist::NOT_NEEDED => "➖ {$item['label']} (não era necessário)",
                 default => null,
             };
+
+            if ($line !== null) {
+                $lines[] = $line;
+            }
         }
 
-        $lines = array_values(array_filter($lines, fn ($line) => $line !== null));
+        return $lines;
+    }
 
-        if (filled($this->maintenance->notes)) {
-            $lines[] = '';
-            $lines[] = "_{$this->maintenance->notes}_";
-        }
+    /**
+     * O relatório que sai sem nenhum modelo cadastrado.
+     *
+     * É também o ponto de partida oferecido no editor: começar de um texto que
+     * já funciona é mais rápido do que encarar uma caixa em branco.
+     */
+    public static function defaultBody(): string
+    {
+        return implode("\n", [
+            '*Relatório de Manutenção* — {{agencia.nome}}',
+            '',
+            'Olá[[, {{cliente.contato}}]]!',
+            'Concluímos a manutenção preventiva do site *{{site.url}}* em {{manutencao.data}}.',
+            '',
+            '{{manutencao.itens}}',
+            '',
+            '[[_{{manutencao.observacoes}}_]]',
+            '',
+            'Qualquer dúvida, é só chamar por aqui.',
+        ]);
+    }
 
-        $lines[] = '';
-        $lines[] = 'Qualquer dúvida, é só chamar por aqui.';
-
-        return implode("\n", $lines);
+    private function defaultText(): string
+    {
+        return MessageComposer::render(self::defaultBody(), $this->variables());
     }
 }

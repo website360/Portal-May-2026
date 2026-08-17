@@ -1,0 +1,122 @@
+<?php
+
+namespace App\Support;
+
+/**
+ * Os pontos do sistema que mandam mensagem, e o que cada um sabe contar.
+ *
+ * O catálogo fica em código, e não no banco, porque um gatilho só existe de
+ * verdade quando alguma tela o dispara: cadastrar "aniversário do cliente" numa
+ * tabela não faria nenhuma mensagem sair. Acrescentar um gatilho é escrever uma
+ * entrada aqui e chamar o compositor no lugar que manda.
+ *
+ * Cada entrada declara duas listas diferentes:
+ *
+ * - `variables` são os marcadores que entram no texto — {{cliente.contato}};
+ * - `fields` são os fatos sobre os quais se escreve regra — "itens não
+ *   necessários é maior que 0". Nem todo fato vira texto, nem todo texto vira
+ *   regra, e misturar os dois numa lista só confundiria quem escreve.
+ */
+final class MessageTriggers
+{
+    public const MAINTENANCE_DONE = 'manutencao.concluida';
+
+    /**
+     * @var array<string, array{
+     *     label: string,
+     *     module: string,
+     *     description: string,
+     *     variables: list<array{key: string, label: string, example: string}>,
+     *     fields: list<array{key: string, label: string, type: string}>,
+     * }>
+     */
+    public const CATALOG = [
+        self::MAINTENANCE_DONE => [
+            'label' => 'Manutenção concluída',
+            'module' => 'manutencao',
+            'description' => 'Sai para o cliente quando você registra uma manutenção e marca para avisar.',
+            'variables' => [
+                ['key' => 'cliente.nome', 'label' => 'Nome do cliente', 'example' => 'Padaria Pão Quente Ltda'],
+                ['key' => 'cliente.contato', 'label' => 'Pessoa de contato', 'example' => 'Maria Souza'],
+                ['key' => 'cliente.primeiro_nome', 'label' => 'Primeiro nome do contato', 'example' => 'Maria'],
+                ['key' => 'site.url', 'label' => 'Endereço do site', 'example' => 'paoquente.com.br'],
+                ['key' => 'manutencao.data', 'label' => 'Data da manutenção', 'example' => '17/08/2026'],
+                ['key' => 'manutencao.mes', 'label' => 'Mês da manutenção', 'example' => 'agosto'],
+                ['key' => 'manutencao.itens', 'label' => 'Lista do que foi feito', 'example' => "✅ Backup completo\n✅ Atualização do WordPress\n➖ Correção de links quebrados (não era necessário)"],
+                ['key' => 'manutencao.observacoes', 'label' => 'Suas observações', 'example' => 'O plugin de formulário foi substituído por um mais leve.'],
+                ['key' => 'agencia.nome', 'label' => 'Nome da agência', 'example' => 'Agência May'],
+            ],
+            'fields' => [
+                ['key' => 'itens_feitos', 'label' => 'Itens executados', 'type' => 'number'],
+                ['key' => 'itens_nao_necessarios', 'label' => 'Itens não necessários', 'type' => 'number'],
+                ['key' => 'tem_observacoes', 'label' => 'Tem observações', 'type' => 'boolean'],
+                ['key' => 'cliente', 'label' => 'Nome do cliente', 'type' => 'text'],
+                ['key' => 'site', 'label' => 'Endereço do site', 'type' => 'text'],
+                ['key' => 'mes', 'label' => 'Mês da manutenção', 'type' => 'number'],
+            ],
+        ],
+    ];
+
+    /** @return list<string> */
+    public static function keys(): array
+    {
+        return array_keys(self::CATALOG);
+    }
+
+    public static function exists(string $trigger): bool
+    {
+        return isset(self::CATALOG[$trigger]);
+    }
+
+    public static function labelFor(string $trigger): string
+    {
+        return self::CATALOG[$trigger]['label'] ?? $trigger;
+    }
+
+    /**
+     * Os marcadores que este gatilho sabe responder.
+     *
+     * @return list<string>
+     */
+    public static function variableKeys(string $trigger): array
+    {
+        return array_column(self::CATALOG[$trigger]['variables'] ?? [], 'key');
+    }
+
+    /** @return list<string> */
+    public static function fieldKeys(string $trigger): array
+    {
+        return array_column(self::CATALOG[$trigger]['fields'] ?? [], 'key');
+    }
+
+    /**
+     * Um exemplo de cada variável, para a pré-visualização do editor.
+     *
+     * @return array<string, string>
+     */
+    public static function examples(string $trigger): array
+    {
+        return array_column(self::CATALOG[$trigger]['variables'] ?? [], 'example', 'key');
+    }
+
+    /**
+     * Marcadores escritos no texto que este gatilho não sabe responder.
+     *
+     * Sai daqui para a validação: um {{cliente.aniversario}} que ninguém
+     * preenche chegaria em branco no WhatsApp do cliente, e quem escreveu
+     * jamais saberia por quê.
+     *
+     * @return list<string>
+     */
+    public static function unknownIn(string $trigger, string $text): array
+    {
+        preg_match_all('/\{\{\s*([a-z0-9_.]+)\s*\}\}/i', $text, $matches);
+
+        $conhecidos = self::variableKeys($trigger);
+
+        return array_values(array_unique(array_filter(
+            $matches[1] ?? [],
+            fn (string $key) => ! in_array($key, $conhecidos, true)
+        )));
+    }
+}

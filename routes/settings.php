@@ -3,6 +3,7 @@
 use App\Http\Controllers\Settings\ContractTemplateController;
 use App\Http\Controllers\Settings\CostCenterController;
 use App\Http\Controllers\Settings\FinanceCategoryController;
+use App\Http\Controllers\Settings\MessageTemplateController;
 use App\Http\Controllers\Settings\PasswordController;
 use App\Http\Controllers\Settings\PaymentMethodController;
 use App\Http\Controllers\Settings\ProfileController;
@@ -49,11 +50,17 @@ Route::middleware('auth')->prefix('configuracoes')->group(function () {
     });
 
     /*
-     * Modelos de contrato. Não são admin-only: são conteúdo de negócio, como
-     * as categorias e as formas de pagamento, e quem escreve em Configurações
-     * pode mexer.
+     * Modelos de contrato e de mensagem. Não são admin-only: são conteúdo de
+     * negócio, como as categorias e as formas de pagamento, e quem escreve em
+     * Configurações pode mexer.
      */
     Route::name('configuracoes.')->group(function () {
+        Route::get('mensagens', [MessageTemplateController::class, 'index'])->name('mensagens.index');
+        Route::post('mensagens', [MessageTemplateController::class, 'store'])->name('mensagens.store');
+        Route::get('mensagens/previa', [MessageTemplateController::class, 'preview'])->name('mensagens.previa');
+        Route::put('mensagens/{modelo}', [MessageTemplateController::class, 'update'])->name('mensagens.update');
+        Route::delete('mensagens/{modelo}', [MessageTemplateController::class, 'destroy'])->name('mensagens.destroy');
+
         Route::get('modelos-de-contrato', [ContractTemplateController::class, 'index'])->name('modelos.index');
         Route::post('modelos-de-contrato', [ContractTemplateController::class, 'store'])->name('modelos.store');
         Route::put('modelos-de-contrato/{modelo}', [ContractTemplateController::class, 'update'])->name('modelos.update');

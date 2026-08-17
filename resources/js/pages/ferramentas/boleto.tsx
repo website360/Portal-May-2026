@@ -3,6 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { CurrencyInput } from '@/components/ui/currency-input';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { SegmentedControl } from '@/components/ui/segmented-control';
 import AppLayout from '@/layouts/app-layout';
 import { formatMoney } from '@/lib/format';
 import { currencyToNumber } from '@/lib/masks';
@@ -222,28 +223,16 @@ export default function Boleto({ today, defaults }: { today: string; defaults: P
                                                 value={juros}
                                                 onChange={(e) => setJuros(e.target.value.replace(',', '.'))}
                                             />
-                                            <div className="bg-muted flex shrink-0 rounded-md p-0.5">
-                                                {(
-                                                    [
-                                                        ['day', 'ao dia'],
-                                                        ['month', 'ao mês'],
-                                                    ] as const
-                                                ).map(([chave, rotulo]) => (
-                                                    <button
-                                                        key={chave}
-                                                        type="button"
-                                                        onClick={() => trocarUnidade(chave)}
-                                                        className={cn(
-                                                            'rounded px-2.5 text-xs font-medium transition-colors',
-                                                            unidade === chave
-                                                                ? 'bg-background text-foreground shadow-sm'
-                                                                : 'text-muted-foreground hover:text-foreground',
-                                                        )}
-                                                    >
-                                                        {rotulo}
-                                                    </button>
-                                                ))}
-                                            </div>
+                                            <SegmentedControl
+                                                className="shrink-0"
+                                                aria-label="Unidade dos juros"
+                                                value={unidade}
+                                                onChange={(v) => trocarUnidade(v as Unidade)}
+                                                options={[
+                                                    { value: 'day', label: 'ao dia' },
+                                                    { value: 'month', label: 'ao mês' },
+                                                ]}
+                                            />
                                         </div>
                                     </Campo>
                                 </div>

@@ -2,7 +2,20 @@ import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { Building2, CreditCard, KeyRound, MessageCircle, Palette, ScrollText, Tags, Truck, UserRound, Users, type LucideIcon } from 'lucide-react';
+import {
+    Building2,
+    CreditCard,
+    KeyRound,
+    MessageCircle,
+    MessageSquareText,
+    Palette,
+    ScrollText,
+    Tags,
+    Truck,
+    UserRound,
+    Users,
+    type LucideIcon,
+} from 'lucide-react';
 
 interface SettingsLink {
     title: string;
@@ -32,8 +45,11 @@ const groups: { label: string; items: SettingsLink[]; adminOnly?: boolean }[] = 
         ],
     },
     {
-        label: 'Contratos',
-        items: [{ title: 'Modelos de contrato', href: '/configuracoes/modelos-de-contrato', icon: ScrollText }],
+        label: 'Conteúdo',
+        items: [
+            { title: 'Mensagens', href: '/configuracoes/mensagens', icon: MessageSquareText },
+            { title: 'Modelos de contrato', href: '/configuracoes/modelos-de-contrato', icon: ScrollText },
+        ],
     },
     {
         label: 'Financeiro',
