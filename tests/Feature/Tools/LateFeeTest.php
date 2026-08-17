@@ -181,6 +181,99 @@ class LateFeeTest extends TestCase
         $this->get(self::URL)->assertOk()->assertInertia(fn ($page) => $page->component('ferramentas/boleto')->has('today'));
     }
 
+    // ── Vários boletos ───────────────────────────────────────────────────────
+
+    /**
+     * @param  array<string, mixed>  $extra
+     * @return array<string, mixed>
+     */
+    private function serie(int $quantidade, string $primeiro = '2026-05-08', string $pagamento = '2026-08-17', array $extra = []): array
+    {
+        return LateFee::schedule(
+            $extra['valor'] ?? 1000,
+            Carbon::parse($primeiro),
+            $quantidade,
+            Carbon::parse($pagamento),
+            $extra['multa'] ?? 5,
+            $extra['juros'] ?? 1,
+            $extra['desconto'] ?? 0,
+        );
+    }
+
+    /** Um boleto por mês, a partir do primeiro vencimento. */
+    public function test_the_due_dates_walk_month_by_month(): void
+    {
+        $r = $this->serie(4);
+
+        $this->assertSame(
+            ['2026-05-08', '2026-06-08', '2026-07-08', '2026-08-08'],
+            array_column($r['installments'], 'due_at')
+        );
+    }
+
+    /** Dia 31 não escorrega para o mês seguinte quando o mês é curto. */
+    public function test_the_thirty_first_lands_on_the_last_day_of_a_short_month(): void
+    {
+        $r = $this->serie(3, primeiro: '2026-01-31');
+
+        $this->assertSame(['2026-01-31', '2026-02-28', '2026-03-31'], array_column($r['installments'], 'due_at'));
+    }
+
+    /** Cada boleto carrega o seu próprio atraso: o mais antigo pesa mais. */
+    public function test_each_one_carries_its_own_delay(): void
+    {
+        $r = $this->serie(4);
+
+        $this->assertSame([101, 70, 40, 9], array_column($r['installments'], 'days_late'));
+        $this->assertGreaterThan($r['installments'][3]['total'], $r['installments'][0]['total']);
+    }
+
+    /** O total é a soma das parcelas, e não a conta feita sobre o valor somado. */
+    public function test_the_total_is_the_sum_of_the_parts(): void
+    {
+        $r = $this->serie(4);
+
+        $this->assertSame(4, $r['totals']['count']);
+        $this->assertSame(4, $r['totals']['late_count']);
+        $this->assertSame(4000.0, $r['totals']['amount']);
+        $this->assertSame(200.0, $r['totals']['fine']);
+        $this->assertSame(
+            array_sum(array_column($r['installments'], 'total')),
+            $r['totals']['total']
+        );
+    }
+
+    /** Boleto que ainda não venceu entra na série sem acréscimo. */
+    public function test_an_installment_that_has_not_come_due_adds_nothing(): void
+    {
+        $r = $this->serie(4, primeiro: '2026-07-08', pagamento: '2026-08-17');
+
+        $this->assertSame(2, $r['totals']['late_count']);
+        $this->assertSame(0.0, $r['installments'][2]['fine']);
+        $this->assertSame(1000.0, $r['installments'][2]['total']);
+    }
+
+    /** O desconto é um só, abatido do total — não se repete em cada parcela. */
+    public function test_the_discount_comes_off_the_grand_total_once(): void
+    {
+        $com = $this->serie(4, extra: ['desconto' => 100]);
+        $sem = $this->serie(4);
+
+        $this->assertSame(100.0, $com['totals']['discount']);
+        $this->assertSame(round($sem['totals']['total'] - 100, 2), $com['totals']['total']);
+    }
+
+    public function test_a_single_boleto_is_a_series_of_one(): void
+    {
+        $r = $this->serie(1, primeiro: '2026-07-10', pagamento: '2026-08-09', extra: ['multa' => 2]);
+
+        $this->assertCount(1, $r['installments']);
+        $this->assertSame(30, $r['installments'][0]['days_late']);
+        $this->assertSame(1030.0, $r['totals']['total']);
+    }
+
+    // ── A tela ───────────────────────────────────────────────────────────────
+
     public function test_the_endpoint_answers_the_screen(): void
     {
         $this->getJson(self::URL.'/calculo?'.http_build_query([
@@ -190,11 +283,45 @@ class LateFeeTest extends TestCase
             'fine' => 2,
             'interest' => 1,
         ]))->assertOk()->assertJson([
-            'days_late' => 30,
-            'fine' => 20,
-            'interest' => 10,
-            'total' => 1030,
+            'installments' => [['days_late' => 30, 'fine' => 20, 'interest' => 10, 'total' => 1030]],
+            'totals' => ['count' => 1, 'total' => 1030],
         ]);
+    }
+
+    public function test_the_endpoint_takes_a_quantity(): void
+    {
+        $this->getJson(self::URL.'/calculo?'.http_build_query([
+            'amount' => 1000,
+            'due_at' => '2026-05-08',
+            'paid_at' => '2026-08-17',
+            'count' => 4,
+        ]))->assertOk()->assertJsonCount(4, 'installments')->assertJson([
+            'totals' => ['count' => 4, 'late_count' => 4, 'amount' => 4000, 'fine' => 200],
+        ]);
+    }
+
+    /** 0,0333% ao dia e 1% ao mês são a mesma taxa, escrita de dois jeitos. */
+    public function test_the_daily_rate_is_the_monthly_one_over_thirty(): void
+    {
+        $pergunta = fn (array $extra) => $this->getJson(self::URL.'/calculo?'.http_build_query([
+            'amount' => 1000,
+            'due_at' => '2026-07-10',
+            'paid_at' => '2026-08-09',
+            'fine' => 0,
+        ] + $extra))->json('totals.interest');
+
+        $this->assertEqualsWithDelta(10.0, $pergunta(['interest' => 1, 'interest_unit' => 'month']), 0.001);
+        $this->assertEqualsWithDelta(10.0, $pergunta(['interest' => 1 / 30, 'interest_unit' => 'day']), 0.001);
+    }
+
+    public function test_the_endpoint_refuses_an_absurd_quantity(): void
+    {
+        $this->getJson(self::URL.'/calculo?'.http_build_query([
+            'amount' => 1000,
+            'due_at' => '2026-05-08',
+            'paid_at' => '2026-08-17',
+            'count' => 500,
+        ]))->assertStatus(422);
     }
 
     public function test_the_endpoint_demands_the_essentials(): void

@@ -26,7 +26,7 @@ class ToolController extends Controller
         [
             'slug' => 'boleto',
             'name' => 'Juros e multa de boleto',
-            'description' => 'Quanto cobrar de um boleto pago com atraso: multa, mora por dia e total.',
+            'description' => 'Quanto cobrar de boletos pagos com atraso: multa, mora por dia e total.',
             'icon' => 'receipt',
         ],
     ];
@@ -40,6 +40,11 @@ class ToolController extends Controller
     {
         return Inertia::render('ferramentas/boleto', [
             'today' => Carbon::today()->format('Y-m-d'),
+            'defaults' => [
+                'fine' => LateFee::DEFAULT_FINE,
+                'interest' => LateFee::DEFAULT_INTEREST,
+                'max_installments' => LateFee::MAX_INSTALLMENTS,
+            ],
         ]);
     }
 
@@ -56,24 +61,36 @@ class ToolController extends Controller
             'amount' => ['required', 'numeric', 'min:0', 'max:99999999'],
             'due_at' => ['required', 'date'],
             'paid_at' => ['required', 'date'],
+            'count' => ['nullable', 'integer', 'min:1', 'max:'.LateFee::MAX_INSTALLMENTS],
             'fine' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'interest' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'interest_unit' => ['nullable', 'in:month,day'],
             'discount' => ['nullable', 'numeric', 'min:0', 'max:99999999'],
         ], [], [
             'amount' => 'valor',
             'due_at' => 'vencimento',
             'paid_at' => 'data do pagamento',
+            'count' => 'quantidade de boletos',
             'fine' => 'multa',
             'interest' => 'juros',
             'discount' => 'desconto',
         ]);
 
-        return response()->json(LateFee::calculate(
+        $juros = (float) ($data['interest'] ?? LateFee::DEFAULT_INTEREST);
+
+        // A lei fala em 1% ao mês, e o boleto costuma imprimir "0,0333% ao dia".
+        // São a mesma coisa; quem digita escolhe a forma que tem na mão.
+        if (($data['interest_unit'] ?? 'month') === 'day') {
+            $juros *= 30;
+        }
+
+        return response()->json(LateFee::schedule(
             (float) $data['amount'],
             Carbon::parse($data['due_at']),
+            (int) ($data['count'] ?? 1),
             Carbon::parse($data['paid_at']),
-            (float) ($data['fine'] ?? 2),
-            (float) ($data['interest'] ?? 1),
+            (float) ($data['fine'] ?? LateFee::DEFAULT_FINE),
+            $juros,
             (float) ($data['discount'] ?? 0),
         ));
     }
