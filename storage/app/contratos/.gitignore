@@ -1,0 +1,6 @@
+# A arte e a tipografia do contrato nao versionam: o timbrado e um binario que
+# muda pouco e as fontes tem licenca propria. Vao para o servidor a mao, como
+# descrito no DEPLOY.md. O que fica aqui e a instrucao de onde colocar o que.
+*
+!.gitignore
+!LEIA-ME.txt

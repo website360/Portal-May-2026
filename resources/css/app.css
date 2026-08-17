@@ -1,0 +1,321 @@
+@import 'tailwindcss';
+
+@plugin 'tailwindcss-animate';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+  Sistema May — design system.
+  Portado de DESIGN-SYSTEM.md (Tailwind v3, canais HSL crus) para Tailwind v4,
+  onde os tokens guardam a cor completa e sao expostos via @theme.
+  Os modificadores de opacidade (bg-primary/10) continuam funcionando.
+*/
+@theme {
+    --font-sans: 'Nunito Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    /* Nao ha webfont mono carregada: a UI usa uma familia so. Este token existe
+       para blocos de codigo eventuais, caindo na mono do sistema. */
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+    --radius-xl: calc(var(--radius) + 4px);
+    --radius-lg: var(--radius);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-sm: calc(var(--radius) - 4px);
+
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+
+    --color-success: var(--success);
+    --color-success-foreground: var(--success-foreground);
+
+    --color-warning: var(--warning);
+    --color-warning-foreground: var(--warning-foreground);
+
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+
+    --color-chart-1: var(--chart-1);
+    --color-chart-2: var(--chart-2);
+    --color-chart-3: var(--chart-3);
+    --color-chart-4: var(--chart-4);
+    --color-chart-5: var(--chart-5);
+
+    --color-sidebar: var(--sidebar-background);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-ring: var(--sidebar-ring);
+
+    /* Sombras suaves e difusas — nunca duras. */
+    --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.04);
+    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.06);
+    --shadow-md: 0 4px 12px -2px rgb(0 0 0 / 0.08), 0 2px 6px -2px rgb(0 0 0 / 0.05);
+    --shadow-lg: 0 12px 32px -8px rgb(0 0 0 / 0.12), 0 4px 12px -4px rgb(0 0 0 / 0.08);
+    --shadow-glow: 0 0 0 1px var(--primary-10), 0 8px 24px -8px var(--primary-35);
+
+    --animate-shimmer: shimmer 1.6s infinite;
+    --animate-fade-in: fade-in 0.3s ease-out;
+    --animate-accordion-down: accordion-down 0.2s ease-out;
+    --animate-accordion-up: accordion-up 0.2s ease-out;
+}
+
+@keyframes shimmer {
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+@keyframes fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes accordion-down {
+    from {
+        height: 0;
+    }
+    to {
+        height: var(--radix-accordion-content-height);
+    }
+}
+
+@keyframes accordion-up {
+    from {
+        height: var(--radix-accordion-content-height);
+    }
+    to {
+        height: 0;
+    }
+}
+
+:root {
+    --background: hsl(0 0% 100%);
+    --foreground: hsl(222 47% 11%);
+    --card: hsl(0 0% 100%);
+    --card-foreground: hsl(222 47% 11%);
+    --popover: hsl(0 0% 100%);
+    --popover-foreground: hsl(222 47% 11%);
+    --primary: hsl(221 83% 53%);
+    --primary-foreground: hsl(0 0% 100%);
+    --secondary: hsl(220 14% 96%);
+    --secondary-foreground: hsl(222 47% 11%);
+    --muted: hsl(220 14% 96%);
+    --muted-foreground: hsl(220 9% 46%);
+    --accent: hsl(221 83% 97%);
+    --accent-foreground: hsl(221 83% 40%);
+    --destructive: hsl(0 72% 51%);
+    --destructive-foreground: hsl(0 0% 100%);
+    --success: hsl(142 71% 45%);
+    --success-foreground: hsl(0 0% 100%);
+    --warning: hsl(38 92% 50%);
+    --warning-foreground: hsl(0 0% 100%);
+    --border: hsl(220 13% 91%);
+    --input: hsl(220 13% 91%);
+    --ring: hsl(221 83% 53%);
+    --radius: 0.65rem;
+
+    --chart-1: hsl(221 83% 53%);
+    --chart-2: hsl(199 89% 48%);
+    --chart-3: hsl(142 71% 45%);
+    --chart-4: hsl(38 92% 50%);
+    --chart-5: hsl(262 83% 58%);
+
+    --sidebar-background: hsl(0 0% 100%);
+    --sidebar-foreground: hsl(222 47% 11%);
+    --sidebar-primary: hsl(221 83% 53%);
+    --sidebar-primary-foreground: hsl(0 0% 100%);
+    --sidebar-accent: hsl(221 83% 96%);
+    --sidebar-accent-foreground: hsl(221 83% 40%);
+    --sidebar-border: hsl(220 13% 91%);
+    --sidebar-ring: hsl(221 83% 53%);
+
+    /* Derivados translucidos do primary, usados por shadow-glow e .bg-radial-primary. */
+    --primary-10: hsl(221 83% 53% / 0.1);
+    --primary-12: hsl(221 83% 53% / 0.12);
+    --primary-35: hsl(221 83% 53% / 0.35);
+    --border-40: hsl(220 13% 91% / 0.4);
+}
+
+.dark {
+    --background: hsl(224 47% 6%);
+    --foreground: hsl(210 40% 98%);
+    --card: hsl(222 44% 9%);
+    --card-foreground: hsl(210 40% 98%);
+    --popover: hsl(222 44% 9%);
+    --popover-foreground: hsl(210 40% 98%);
+    --primary: hsl(217 91% 60%);
+    --primary-foreground: hsl(222 47% 11%);
+    --secondary: hsl(217 33% 17%);
+    --secondary-foreground: hsl(210 40% 98%);
+    --muted: hsl(217 33% 15%);
+    --muted-foreground: hsl(215 20% 65%);
+    --accent: hsl(222 47% 16%);
+    --accent-foreground: hsl(213 94% 78%);
+    --destructive: hsl(0 63% 50%);
+    --destructive-foreground: hsl(210 40% 98%);
+    --success: hsl(142 64% 42%);
+    --success-foreground: hsl(210 40% 98%);
+    --warning: hsl(38 92% 50%);
+    --warning-foreground: hsl(222 47% 11%);
+    --border: hsl(217 33% 18%);
+    --input: hsl(217 33% 20%);
+    --ring: hsl(217 91% 60%);
+
+    --chart-1: hsl(217 91% 60%);
+    --chart-2: hsl(199 89% 55%);
+    --chart-3: hsl(142 64% 48%);
+    --chart-4: hsl(38 92% 55%);
+    --chart-5: hsl(262 83% 68%);
+
+    --sidebar-background: hsl(224 45% 7%);
+    --sidebar-foreground: hsl(210 40% 98%);
+    --sidebar-primary: hsl(217 91% 60%);
+    --sidebar-primary-foreground: hsl(222 47% 11%);
+    --sidebar-accent: hsl(222 47% 14%);
+    --sidebar-accent-foreground: hsl(213 94% 78%);
+    --sidebar-border: hsl(217 33% 15%);
+    --sidebar-ring: hsl(217 91% 60%);
+
+    --primary-10: hsl(217 91% 60% / 0.1);
+    --primary-12: hsl(217 91% 60% / 0.12);
+    --primary-35: hsl(217 91% 60% / 0.35);
+    --border-40: hsl(217 33% 18% / 0.4);
+}
+
+@layer base {
+    /*
+      No Tailwind v4 a cor de borda padrao virou `currentColor`. Fixamos no token
+      --border para que bordas e pseudo-elementos sigam o tema (claro e escuro).
+    */
+    *,
+    ::after,
+    ::before,
+    ::backdrop,
+    ::file-selector-button {
+        border-color: var(--border);
+    }
+
+    * {
+        @apply border-border;
+    }
+
+    /* Base 17px: toda a UI e rem, entao fica um pouco maior e mais confortavel. */
+    html {
+        font-size: 17px;
+        -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+        @apply bg-background text-foreground;
+        font-feature-settings:
+            'rlig' 1,
+            'calt' 1,
+            'ss01' 1;
+        text-rendering: optimizeLegibility;
+    }
+}
+
+@layer utilities {
+    /* Headers e barras flutuantes. */
+    .glass {
+        background-color: color-mix(in srgb, var(--background) 70%, transparent);
+        backdrop-filter: blur(24px) saturate(150%);
+        -webkit-backdrop-filter: blur(24px) saturate(150%);
+    }
+
+    /* Grid sutil de 40x40 — telas de auth e marketing. */
+    .bg-grid {
+        background-image:
+            linear-gradient(to right, var(--border-40) 1px, transparent 1px), linear-gradient(to bottom, var(--border-40) 1px, transparent 1px);
+        background-size: 40px 40px;
+    }
+
+    .bg-radial-primary {
+        background-image: radial-gradient(60% 60% at 50% 0%, var(--primary-12) 0%, transparent 100%);
+    }
+
+    .text-gradient {
+        @apply from-foreground to-foreground/60 bg-gradient-to-br bg-clip-text text-transparent;
+    }
+
+    .shimmer {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .shimmer::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        transform: translateX(-100%);
+        background-image: linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--foreground) 4%, transparent) 50%, transparent 100%);
+        animation: var(--animate-shimmer);
+    }
+
+    /*
+      O sistema inteiro usa uma unica familia (Nunito Sans). Esta classe nao troca
+      a fonte — so liga os algarismos de largura fixa, para que valores empilhados
+      em coluna fiquem alinhados.
+    */
+    .tabular {
+        font-variant-numeric: tabular-nums;
+    }
+}
+
+/* Scrollbar custom. */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: var(--border);
+    border: 2px solid transparent;
+    border-radius: 9999px;
+    background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: color-mix(in srgb, var(--muted-foreground) 40%, transparent);
+    background-clip: content-box;
+}
+
+* {
+    scrollbar-color: var(--border) transparent;
+}

@@ -1,0 +1,28 @@
+Papel timbrado, logo e fontes do contrato em PDF
+================================================
+
+storage/app/contratos/timbrado.png
+    A arte de fundo, repetida em todas as paginas. PNG ou JPG na proporcao A4
+    (210 x 297 mm). 1240 x 1754 px cobre 150 dpi com folga.
+    Existindo, ela substitui o cabecalho desenhado pelo sistema.
+
+storage/app/contratos/logo.png
+    So e usada quando NAO ha timbrado. PNG ou JPG.
+    SVG nao serve: a biblioteca de PDF nao rasteriza de forma confiavel.
+
+storage/app/contratos/fontes/regular.ttf
+storage/app/contratos/fontes/bold.ttf
+storage/app/contratos/fontes/italic.ttf
+storage/app/contratos/fontes/bolditalic.ttf
+    A tipografia do contrato. Sem regular.ttf, o PDF usa a DejaVu Sans, que
+    acompanha a biblioteca.
+
+    O negrito PRECISA do bold.ttf. Sem ele a biblioteca nao engrossa a fonte,
+    apenas ignora o pedido — e as clausulas saem todas com o mesmo peso.
+
+    Fontes .otf tambem funcionam; use a mesma extensao no nome do arquivo.
+
+Ajuste fino
+    As margens do texto ficam em config/contratos.php, em 'margens'. Elas
+    precisam abrir espaco para o cabecalho e o rodape do seu timbrado — cada
+    arte tem uma area livre diferente. O padrao e 45mm no topo.
