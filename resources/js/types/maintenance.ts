@@ -47,8 +47,8 @@ export interface MaintenanceRecord {
     skipped_count: number;
     total_count: number;
     notes: string | null;
-    whatsapp_sent_at: string | null;
-    whatsapp_error: string | null;
+    notified_at: string | null;
+    notify_error: string | null;
     user: string | null;
     site_url: string;
     client: { id: number; name: string; photo_url: string | null };

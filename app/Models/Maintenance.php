@@ -27,7 +27,7 @@ class Maintenance extends Model
         return [
             'performed_at' => 'date',
             'items' => 'array',
-            'whatsapp_sent_at' => 'datetime',
+            'notified_at' => 'datetime',
         ];
     }
 
@@ -118,8 +118,8 @@ class Maintenance extends Model
         }
 
         $reports[0] === 'sent'
-            ? $query->whereNotNull('whatsapp_sent_at')
-            : $query->whereNull('whatsapp_sent_at');
+            ? $query->whereNotNull('notified_at')
+            : $query->whereNull('notified_at');
     }
 
     /**

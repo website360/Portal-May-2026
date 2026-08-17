@@ -332,8 +332,8 @@ class MaintenanceTest extends TestCase
     {
         $plano = $this->plano();
 
-        $enviado = Maintenance::factory()->create(['maintenance_plan_id' => $plano->id, 'whatsapp_sent_at' => now()]);
-        $falhou = Maintenance::factory()->create(['maintenance_plan_id' => $plano->id, 'whatsapp_error' => 'sem telefone']);
+        $enviado = Maintenance::factory()->create(['maintenance_plan_id' => $plano->id, 'notified_at' => now()]);
+        $falhou = Maintenance::factory()->create(['maintenance_plan_id' => $plano->id, 'notify_error' => 'sem telefone']);
 
         $naoEnviados = $this->idsDe(self::URL.'?tab=historico&reports[]=not_sent', 'history');
 
@@ -396,14 +396,14 @@ class MaintenanceTest extends TestCase
             'maintenance_plan_id' => $plano->id,
             'user_id' => $ana->id,
             'performed_at' => '2026-07-10',
-            'whatsapp_sent_at' => null,
+            'notified_at' => null,
         ]);
 
         // Mesma pessoa, mês errado.
         Maintenance::factory()->create(['maintenance_plan_id' => $plano->id, 'user_id' => $ana->id, 'performed_at' => '2026-08-10']);
 
         // Mês certo, mas relatório enviado.
-        Maintenance::factory()->create(['maintenance_plan_id' => $plano->id, 'user_id' => $ana->id, 'performed_at' => '2026-07-15', 'whatsapp_sent_at' => now()]);
+        Maintenance::factory()->create(['maintenance_plan_id' => $plano->id, 'user_id' => $ana->id, 'performed_at' => '2026-07-15', 'notified_at' => now()]);
 
         $ids = $this->idsDe(self::URL."?tab=historico&users[]={$ana->id}&month=2026-07&reports[]=not_sent", 'history');
 
@@ -484,7 +484,7 @@ class MaintenanceTest extends TestCase
             'notify' => true,
         ])->assertSessionHas('success');
 
-        $this->assertNotNull(Maintenance::sole()->whatsapp_sent_at);
+        $this->assertNotNull(Maintenance::sole()->notified_at);
         Http::assertSent(fn ($request) => $request['number'] === '5511988887777');
     }
 
@@ -505,8 +505,8 @@ class MaintenanceTest extends TestCase
 
         $manutencao = Maintenance::sole();
 
-        $this->assertNull($manutencao->whatsapp_sent_at);
-        $this->assertStringContainsString('WhatsApp não está conectado', $manutencao->whatsapp_error);
+        $this->assertNull($manutencao->notified_at);
+        $this->assertStringContainsString('WhatsApp não está conectado', $manutencao->notify_error);
         $this->assertSame(Carbon::today()->toDateString(), $plano->refresh()->last_performed_at->toDateString());
     }
 
@@ -548,15 +548,15 @@ class MaintenanceTest extends TestCase
         $plano = $this->plano(['client_id' => $cliente->id]);
         $manutencao = Maintenance::factory()->create([
             'maintenance_plan_id' => $plano->id,
-            'whatsapp_error' => 'WhatsApp não está conectado.',
+            'notify_error' => 'WhatsApp não está conectado.',
         ]);
 
         $this->post(self::URL."/registros/{$manutencao->id}/reenviar")->assertSessionHas('success');
 
         $manutencao->refresh();
 
-        $this->assertNotNull($manutencao->whatsapp_sent_at);
-        $this->assertNull($manutencao->whatsapp_error);
+        $this->assertNotNull($manutencao->notified_at);
+        $this->assertNull($manutencao->notify_error);
     }
 
     public function test_someone_without_the_module_does_not_get_in(): void

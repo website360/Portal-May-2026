@@ -3,6 +3,7 @@
 use App\Http\Controllers\Settings\ContractTemplateController;
 use App\Http\Controllers\Settings\CostCenterController;
 use App\Http\Controllers\Settings\FinanceCategoryController;
+use App\Http\Controllers\Settings\MailController;
 use App\Http\Controllers\Settings\MessageTemplateController;
 use App\Http\Controllers\Settings\PasswordController;
 use App\Http\Controllers\Settings\PaymentMethodController;
@@ -42,6 +43,10 @@ Route::middleware('auth')->prefix('configuracoes')->group(function () {
         Route::get('whatsapp/qrcode', [WhatsappController::class, 'qrCode'])->name('whatsapp.qrcode');
         Route::get('whatsapp/estado', [WhatsappController::class, 'state'])->name('whatsapp.estado');
         Route::delete('whatsapp', [WhatsappController::class, 'disconnect'])->name('whatsapp.disconnect');
+
+        Route::get('email', [MailController::class, 'index'])->name('email.index');
+        Route::put('email', [MailController::class, 'update'])->name('email.update');
+        Route::post('email/teste', [MailController::class, 'test'])->name('email.teste');
 
         Route::get('usuarios', [UserController::class, 'index'])->name('usuarios.index');
         Route::post('usuarios', [UserController::class, 'store'])->name('usuarios.store');

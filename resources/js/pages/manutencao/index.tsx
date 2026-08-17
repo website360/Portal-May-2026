@@ -536,16 +536,16 @@ function HistoryTable({
                                 </td>
 
                                 <td className="px-4 py-3">
-                                    {record.whatsapp_sent_at ? (
+                                    {record.notified_at ? (
                                         <Badge variant="success">
                                             <CircleCheck />
-                                            {record.whatsapp_sent_at}
+                                            {record.notified_at}
                                         </Badge>
                                     ) : (
                                         <span className="flex items-center gap-1.5">
                                             <Badge variant="muted">Não enviado</Badge>
-                                            {record.whatsapp_error && (
-                                                <span title={record.whatsapp_error}>
+                                            {record.notify_error && (
+                                                <span title={record.notify_error}>
                                                     <AlertTriangle className="text-warning size-3.5" />
                                                 </span>
                                             )}
@@ -572,8 +572,8 @@ function HistoryTable({
                                                     router.post(route('manutencao.registros.reenviar', record.id), {}, { preserveScroll: true })
                                                 }
                                             >
-                                                {record.whatsapp_sent_at ? <Send className="size-4" /> : <MessageCircle className="size-4" />}
-                                                {record.whatsapp_sent_at ? 'Enviar de novo' : 'Enviar relatório'}
+                                                {record.notified_at ? <Send className="size-4" /> : <MessageCircle className="size-4" />}
+                                                {record.notified_at ? 'Enviar de novo' : 'Enviar relatório'}
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => onDelete(record)} className="text-destructive focus:text-destructive">
                                                 <Trash2 className="size-4" />

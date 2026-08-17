@@ -3,14 +3,15 @@
 namespace App\Support;
 
 use App\Models\Maintenance;
-use App\Models\WhatsappConnection;
+use App\Models\User;
 use Illuminate\Support\Str;
 
 /**
- * O relatório que o cliente recebe no WhatsApp quando a manutenção é concluída.
+ * O relatório que sai quando a manutenção é concluída.
  *
  * Separado do envio de propósito: o texto é a parte que se lê, se revisa e se
- * testa; mandar é detalhe de transporte.
+ * testa; mandar é detalhe de transporte. Por onde ele sai — WhatsApp, e-mail,
+ * os dois — e para quem é decisão do modelo cadastrado.
  */
 final class MaintenanceReport
 {
@@ -23,38 +24,51 @@ final class MaintenanceReport
      * WhatsApp esteja fora do ar. O motivo fica gravado na própria manutenção,
      * para quem for reenviar depois saber o que faltou.
      *
-     * @return array{ok: bool, message: string}
+     * @return array{ok: bool, message: string, sent: list<string>, errors: list<string>}
      */
     public function send(): array
     {
-        $connection = WhatsappConnection::current();
+        $resultado = Notifier::dispatch(
+            MessageTriggers::MAINTENANCE_DONE,
+            $this->variables(),
+            $this->facts(),
+            $this->audience(),
+            MessageComposer::render(self::defaultBody(), $this->variables()),
+        );
 
-        if ($connection === null || ! $connection->isConnected()) {
-            return $this->record(false, 'WhatsApp não está conectado. Conecte em Configurações › WhatsApp e reenvie.');
-        }
+        $this->maintenance->forceFill([
+            'notified_at' => $resultado['ok'] ? now() : null,
+            'notify_error' => $resultado['ok'] ? null : $resultado['message'],
+        ])->saveQuietly();
 
-        $phone = $this->maintenance->plan->client->phone;
-
-        if (blank($phone)) {
-            return $this->record(false, 'O cliente não tem telefone cadastrado.');
-        }
-
-        $result = (new Evolution($connection))->sendText($phone, $this->text());
-
-        return $this->record($result['ok'], $result['message']);
+        return $resultado;
     }
 
     /**
-     * @return array{ok: bool, message: string}
+     * Quem pode ser avisado desta manutenção.
+     *
+     * @return array<string, list<array{name?: string, phone?: string, email?: string}>>
      */
-    private function record(bool $ok, string $message): array
+    private function audience(): array
     {
-        $this->maintenance->forceFill([
-            'whatsapp_sent_at' => $ok ? now() : null,
-            'whatsapp_error' => $ok ? null : $message,
-        ])->saveQuietly();
+        $client = $this->maintenance->plan->client;
+        $executou = $this->maintenance->user;
 
-        return ['ok' => $ok, 'message' => $ok ? 'Relatório enviado no WhatsApp.' : $message];
+        return [
+            MessageDelivery::CLIENT => [[
+                'name' => (string) $client->contact_name,
+                'phone' => (string) $client->phone,
+                'email' => (string) $client->email,
+            ]],
+            MessageDelivery::ADMINS => User::query()
+                ->where('role', 'admin')
+                ->get()
+                ->map(fn (User $user) => ['name' => $user->name, 'email' => $user->email])
+                ->all(),
+            MessageDelivery::ASSIGNED => $executou
+                ? [['name' => $executou->name, 'email' => $executou->email]]
+                : [],
+        ];
     }
 
     /**

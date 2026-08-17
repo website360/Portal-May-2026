@@ -290,8 +290,8 @@ class MaintenancePlanController extends Controller
             'skipped_count' => $maintenance->skippedCount(),
             'total_count' => count($maintenance->items ?? []),
             'notes' => $maintenance->notes,
-            'whatsapp_sent_at' => $maintenance->whatsapp_sent_at?->format('d/m/Y H:i'),
-            'whatsapp_error' => $maintenance->whatsapp_error,
+            'notified_at' => $maintenance->notified_at?->format('d/m/Y H:i'),
+            'notify_error' => $maintenance->notify_error,
             'user' => $maintenance->user?->name,
             'site_url' => $maintenance->plan->site_url,
             'client' => [

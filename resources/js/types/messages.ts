@@ -30,7 +30,11 @@ export interface MessageTemplate {
     id: number;
     trigger: string;
     name: string;
+    description: string | null;
     variations: string[];
+    channels: string[];
+    recipients: string[];
+    subject: string | null;
     conditions: Condition[];
     priority: number;
     active: boolean;

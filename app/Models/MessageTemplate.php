@@ -14,12 +14,17 @@ use Illuminate\Database\Eloquent\Model;
  */
 class MessageTemplate extends Model
 {
-    protected $fillable = ['trigger', 'name', 'variations', 'conditions', 'priority', 'active'];
+    protected $fillable = [
+        'trigger', 'name', 'description', 'variations', 'channels',
+        'recipients', 'subject', 'conditions', 'priority', 'active',
+    ];
 
     protected function casts(): array
     {
         return [
             'variations' => 'array',
+            'channels' => 'array',
+            'recipients' => 'array',
             'conditions' => 'array',
             'priority' => 'integer',
             'active' => 'boolean',

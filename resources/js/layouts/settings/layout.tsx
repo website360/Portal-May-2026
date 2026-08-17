@@ -3,6 +3,7 @@ import { cn } from '@/lib/utils';
 import { type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 import {
+    AtSign,
     Building2,
     CreditCard,
     KeyRound,
@@ -42,6 +43,7 @@ const groups: { label: string; items: SettingsLink[]; adminOnly?: boolean }[] = 
         items: [
             { title: 'Usuários', href: '/configuracoes/usuarios', icon: Users },
             { title: 'WhatsApp', href: '/configuracoes/whatsapp', icon: MessageCircle },
+            { title: 'E-mail', href: '/configuracoes/email', icon: AtSign },
         ],
     },
     {

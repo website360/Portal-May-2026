@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\MessageTemplate;
 use App\Support\MaintenanceReport;
 use App\Support\MessageComposer;
+use App\Support\MessageDelivery;
 use App\Support\MessageRules;
 use App\Support\MessageTriggers;
+use App\Support\Smtp;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -36,7 +38,11 @@ class MessageTemplateController extends Controller
                     'id' => $template->id,
                     'trigger' => $template->trigger,
                     'name' => $template->name,
+                    'description' => $template->description,
                     'variations' => $template->variations ?? [],
+                    'channels' => $template->channels ?: [MessageDelivery::WHATSAPP],
+                    'recipients' => $template->recipients ?: [MessageDelivery::CLIENT],
+                    'subject' => $template->subject,
                     'conditions' => $template->conditions ?? [],
                     'priority' => $template->priority,
                     'active' => $template->active,
@@ -49,6 +55,10 @@ class MessageTemplateController extends Controller
             'triggers' => MessageTriggers::CATALOG,
             'operators' => MessageRules::OPERATORS,
             'operators_without_value' => MessageRules::WITHOUT_VALUE,
+            'channels' => MessageDelivery::CHANNELS,
+            'recipient_kinds' => MessageDelivery::RECIPIENTS,
+            // Marcar "e-mail" num sistema sem servidor cadastrado não manda nada.
+            'mail_ready' => Smtp::configured(),
             // O texto que sai hoje sem nenhum modelo: ponto de partida do editor.
             'starters' => [MessageTriggers::MAINTENANCE_DONE => MaintenanceReport::defaultBody()],
         ]);
@@ -106,8 +116,15 @@ class MessageTemplateController extends Controller
         $data = $request->validate([
             'trigger' => ['required', Rule::in(MessageTriggers::keys())],
             'name' => ['required', 'string', 'max:120'],
+            'description' => ['nullable', 'string', 'max:255'],
             'variations' => ['required', 'array', 'min:1', 'max:10'],
             'variations.*' => ['required', 'string', 'max:4000'],
+            'channels' => ['required', 'array', 'min:1'],
+            'channels.*' => [Rule::in(MessageDelivery::channelKeys())],
+            'recipients' => ['required', 'array', 'min:1'],
+            'recipients.*' => [Rule::in(MessageDelivery::recipientKeys())],
+            // O assunto só existe para e-mail — é o único canal que tem um.
+            'subject' => [Rule::requiredIf(in_array(MessageDelivery::EMAIL, (array) $request->input('channels', []), true)), 'nullable', 'string', 'max:200'],
             'conditions' => ['nullable', 'array', 'max:10'],
             'conditions.*.field' => ['required', Rule::in(MessageTriggers::fieldKeys($trigger))],
             'conditions.*.operator' => ['required', Rule::in(array_keys(MessageRules::OPERATORS))],
@@ -119,8 +136,20 @@ class MessageTemplateController extends Controller
             'name' => 'nome',
             'variations' => 'variações',
             'variations.*' => 'variação',
+            'channels' => 'canais',
+            'recipients' => 'destinatários',
+            'subject' => 'assunto',
             'priority' => 'prioridade',
         ]);
+
+        // O assunto do e-mail também aceita marcadores, e vale a mesma regra.
+        $desconhecidosNoAssunto = MessageTriggers::unknownIn($trigger, (string) ($data['subject'] ?? ''));
+
+        if ($desconhecidosNoAssunto !== []) {
+            throw ValidationException::withMessages([
+                'subject' => 'Não conheço {{'.implode('}}, {{', $desconhecidosNoAssunto).'}} neste gatilho.',
+            ]);
+        }
 
         /*
          * Marcador que o gatilho não conhece chegaria em branco no WhatsApp do

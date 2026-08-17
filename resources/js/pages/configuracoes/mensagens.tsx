@@ -27,6 +27,10 @@ interface PageProps {
     triggers: Record<string, Trigger>;
     operators: Record<string, string>;
     operators_without_value: string[];
+    channels: Record<string, string>;
+    recipient_kinds: Record<string, string>;
+    /** Marcar e-mail sem servidor cadastrado não manda nada. */
+    mail_ready: boolean;
     /** O texto que o sistema manda hoje sem nenhum modelo, por gatilho. */
     starters: Record<string, string>;
 }
@@ -34,14 +38,40 @@ interface PageProps {
 interface FormData {
     trigger: string;
     name: string;
+    description: string;
     variations: string[];
+    channels: string[];
+    recipients: string[];
+    subject: string;
     conditions: Condition[];
     priority: number;
     active: boolean;
     [key: string]: unknown;
 }
 
-export default function Mensagens({ templates, triggers, operators, operators_without_value, starters }: PageProps) {
+const VAZIO: FormData = {
+    trigger: '',
+    name: '',
+    description: '',
+    variations: [''],
+    channels: ['whatsapp'],
+    recipients: ['client'],
+    subject: '',
+    conditions: [],
+    priority: 0,
+    active: true,
+};
+
+export default function Mensagens({
+    templates,
+    triggers,
+    operators,
+    operators_without_value,
+    channels,
+    recipient_kinds,
+    mail_ready,
+    starters,
+}: PageProps) {
     const [open, setOpen] = useState(false);
     const [editing, setEditing] = useState<MessageTemplate | null>(null);
     const [deleting, setDeleting] = useState<MessageTemplate | null>(null);
@@ -131,6 +161,14 @@ export default function Mensagens({ templates, triggers, operators, operators_wi
                                                             : `Quando ${template.rules.join(' e ')}.`}
                                                     </p>
 
+                                                    <p className="text-muted-foreground text-xs">
+                                                        Por {template.channels.map((c) => channels[c] ?? c).join(' e ')} para{' '}
+                                                        {template.recipients
+                                                            .map((r) => (recipient_kinds[r] ?? r).toLowerCase())
+                                                            .join(' e ')}
+                                                        .
+                                                    </p>
+
                                                     {/*
                                                         A ordem importa e não é óbvia: quem lê precisa saber que o
                                                         primeiro que bate é o que sai, e nenhum outro.
@@ -179,6 +217,9 @@ export default function Mensagens({ templates, triggers, operators, operators_wi
                     triggers={triggers}
                     operators={operators}
                     semValor={operators_without_value}
+                    canais={channels}
+                    tiposDeDestinatario={recipient_kinds}
+                    emailPronto={mail_ready}
                     starters={starters}
                 />
 
@@ -208,6 +249,9 @@ function TemplateSheet({
     triggers,
     operators,
     semValor,
+    canais,
+    tiposDeDestinatario,
+    emailPronto,
     starters,
 }: {
     open: boolean;
@@ -217,16 +261,12 @@ function TemplateSheet({
     triggers: Record<string, Trigger>;
     operators: Record<string, string>;
     semValor: string[];
+    canais: Record<string, string>;
+    tiposDeDestinatario: Record<string, string>;
+    emailPronto: boolean;
     starters: Record<string, string>;
 }) {
-    const { data, setData, post, put, processing, errors, clearErrors } = useForm<FormData>({
-        trigger: triggerPadrao,
-        name: '',
-        variations: [''],
-        conditions: [],
-        priority: 0,
-        active: true,
-    });
+    const { data, setData, post, put, processing, errors, clearErrors } = useForm<FormData>({ ...VAZIO, trigger: triggerPadrao });
 
     const [ativa, setAtiva] = useState(0);
     const [previa, setPrevia] = useState('');
@@ -242,12 +282,16 @@ function TemplateSheet({
                 ? {
                       trigger: template.trigger,
                       name: template.name,
+                      description: template.description ?? '',
                       variations: template.variations.length ? template.variations : [''],
+                      channels: template.channels.length ? template.channels : ['whatsapp'],
+                      recipients: template.recipients.length ? template.recipients : ['client'],
+                      subject: template.subject ?? '',
                       conditions: template.conditions ?? [],
                       priority: template.priority,
                       active: template.active,
                   }
-                : { trigger: triggerPadrao, name: '', variations: [''], conditions: [], priority: 0, active: true },
+                : { ...VAZIO, trigger: triggerPadrao },
         );
         setAtiva(0);
         clearErrors();
@@ -348,6 +392,100 @@ function TemplateSheet({
                                 <p className="text-muted-foreground text-xs">{gatilho?.description}</p>
                             </div>
                         </div>
+
+                        <div className="grid content-start gap-1.5">
+                            <Label htmlFor="descricao">Descrição</Label>
+                            <Input
+                                id="descricao"
+                                value={data.description}
+                                onChange={(e) => setData('description', e.target.value)}
+                                placeholder="Para que serve este modelo, se não for óbvio pelo nome."
+                            />
+                        </div>
+
+                        {/* ── Canais e destinatários ─────────────────────────── */}
+                        <section className="grid content-start gap-5 sm:grid-cols-2">
+                            <div className="space-y-2">
+                                <div>
+                                    <h3 className="text-sm font-medium">Por onde sai</h3>
+                                    <p className="text-muted-foreground text-xs">Marcado mais de um, sai pelos dois.</p>
+                                </div>
+
+                                {Object.entries(canais).map(([chave, rotulo]) => {
+                                    const indisponivel = chave === 'email' && !emailPronto;
+
+                                    return (
+                                        <label key={chave} className={cn('flex items-start gap-2', indisponivel ? 'cursor-default' : 'cursor-pointer')}>
+                                            <Checkbox
+                                                className="mt-0.5"
+                                                checked={data.channels.includes(chave)}
+                                                onCheckedChange={(v) =>
+                                                    setData(
+                                                        'channels',
+                                                        v === true ? [...data.channels, chave] : data.channels.filter((c) => c !== chave),
+                                                    )
+                                                }
+                                            />
+                                            <span className="space-y-0.5">
+                                                <span className="block text-sm">{rotulo}</span>
+                                                {/*
+                                                    Marcar e-mail sem servidor cadastrado deixaria o modelo
+                                                    salvo e mudo. Dizer aqui é mais barato que descobrir depois.
+                                                */}
+                                                {indisponivel && (
+                                                    <span className="text-warning block text-xs">
+                                                        Sem servidor cadastrado — configure em Configurações › E-mail.
+                                                    </span>
+                                                )}
+                                            </span>
+                                        </label>
+                                    );
+                                })}
+
+                                {errors.channels && <p className="text-destructive text-xs">{errors.channels}</p>}
+                            </div>
+
+                            <div className="space-y-2">
+                                <div>
+                                    <h3 className="text-sm font-medium">Para quem</h3>
+                                    <p className="text-muted-foreground text-xs">Quem não tiver contato para o canal é pulado.</p>
+                                </div>
+
+                                {Object.entries(tiposDeDestinatario).map(([chave, rotulo]) => (
+                                    <label key={chave} className="flex cursor-pointer items-center gap-2">
+                                        <Checkbox
+                                            checked={data.recipients.includes(chave)}
+                                            onCheckedChange={(v) =>
+                                                setData(
+                                                    'recipients',
+                                                    v === true ? [...data.recipients, chave] : data.recipients.filter((r) => r !== chave),
+                                                )
+                                            }
+                                        />
+                                        <span className="text-sm">{rotulo}</span>
+                                    </label>
+                                ))}
+
+                                {errors.recipients && <p className="text-destructive text-xs">{errors.recipients}</p>}
+                            </div>
+                        </section>
+
+                        {data.channels.includes('email') && (
+                            <div className="grid content-start gap-1.5">
+                                <Label htmlFor="assunto">
+                                    Assunto do e-mail
+                                    <span className="text-destructive ml-0.5">*</span>
+                                </Label>
+                                <Input
+                                    id="assunto"
+                                    value={data.subject}
+                                    onChange={(e) => setData('subject', e.target.value)}
+                                    placeholder="Manutenção concluída — {{site.url}}"
+                                />
+                                <p className="text-muted-foreground text-xs">Aceita os mesmos marcadores do texto.</p>
+                                {errors.subject && <p className="text-destructive text-xs">{errors.subject}</p>}
+                            </div>
+                        )}
 
                         {/* ── Regras ─────────────────────────────────────────── */}
                         <section className="space-y-2">

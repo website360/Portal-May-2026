@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Support\MaintenanceChecklist;
 use App\Support\MaintenanceReport;
 use App\Support\MessageComposer;
+use App\Support\MessageDelivery;
 use App\Support\MessageRules;
 use App\Support\MessageTriggers;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -43,6 +44,8 @@ class MessageTemplateTest extends TestCase
     {
         return MessageTemplate::create($atributos + [
             'trigger' => MessageTriggers::MAINTENANCE_DONE,
+            'channels' => [MessageDelivery::WHATSAPP],
+            'recipients' => [MessageDelivery::CLIENT],
             'name' => 'Padrão',
             'variations' => ['Olá, {{cliente.contato}}!'],
             'conditions' => [],
@@ -245,6 +248,8 @@ _{{manutencao.observacoes}}_]]';
         $this->post(self::URL, [
             'trigger' => MessageTriggers::MAINTENANCE_DONE,
             'name' => 'Novo',
+            'channels' => [MessageDelivery::WHATSAPP],
+            'recipients' => [MessageDelivery::CLIENT],
             'variations' => ['Olá, {{cliente.contato}}!', 'Oi, {{cliente.primeiro_nome}}!'],
             'conditions' => [['field' => 'itens_feitos', 'operator' => 'maior', 'value' => '0']],
             'priority' => 5,
@@ -263,6 +268,8 @@ _{{manutencao.observacoes}}_]]';
         $this->post(self::URL, [
             'trigger' => MessageTriggers::MAINTENANCE_DONE,
             'name' => 'Errado',
+            'channels' => [MessageDelivery::WHATSAPP],
+            'recipients' => [MessageDelivery::CLIENT],
             'variations' => ['Olá, {{cliente.aniversario}}!'],
         ])->assertSessionHasErrors('variations.0');
 
@@ -274,6 +281,8 @@ _{{manutencao.observacoes}}_]]';
         $this->post(self::URL, [
             'trigger' => MessageTriggers::MAINTENANCE_DONE,
             'name' => 'Errado',
+            'channels' => [MessageDelivery::WHATSAPP],
+            'recipients' => [MessageDelivery::CLIENT],
             'variations' => ['Olá!'],
             'conditions' => [['field' => 'signo_do_cliente', 'operator' => 'igual', 'value' => 'áries']],
         ])->assertSessionHasErrors('conditions.0.field');
@@ -284,6 +293,8 @@ _{{manutencao.observacoes}}_]]';
         $this->post(self::URL, [
             'trigger' => MessageTriggers::MAINTENANCE_DONE,
             'name' => 'Vazio',
+            'channels' => [MessageDelivery::WHATSAPP],
+            'recipients' => [MessageDelivery::CLIENT],
             'variations' => [],
         ])->assertSessionHasErrors('variations');
     }
@@ -295,6 +306,8 @@ _{{manutencao.observacoes}}_]]';
         $this->put(self::URL.'/'.$modelo->id, [
             'trigger' => MessageTriggers::MAINTENANCE_DONE,
             'name' => 'Renomeado',
+            'channels' => [MessageDelivery::WHATSAPP],
+            'recipients' => [MessageDelivery::CLIENT],
             'variations' => ['Outro texto'],
             'active' => false,
         ])->assertRedirect();
