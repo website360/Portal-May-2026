@@ -281,7 +281,7 @@ export default function Boleto({ today, defaults }: { today: string; defaults: P
                                                 <tr key={p.number} className="border-b last:border-0">
                                                     <td className="px-4 py-2.5 font-medium">{dataCurta(p.due_at)}</td>
                                                     <td className={cn('tabular px-4 py-2.5 text-right', !p.late && 'text-muted-foreground')}>
-                                                        {p.late ? `${p.days_late} d` : 'em dia'}
+                                                        {p.late ? `${p.days_late} ${p.days_late === 1 ? 'dia' : 'dias'}` : 'em dia'}
                                                     </td>
                                                     <td className="tabular text-muted-foreground px-4 py-2.5 text-right">{formatMoney(p.fine)}</td>
                                                     <td className="tabular text-muted-foreground px-4 py-2.5 text-right">
