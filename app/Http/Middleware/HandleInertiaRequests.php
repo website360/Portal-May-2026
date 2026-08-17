@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\WhatsappConnection;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -58,6 +59,40 @@ class HandleInertiaRequests extends Middleware
                 'success' => $request->session()->get('success'),
                 'warning' => $request->session()->get('warning'),
             ],
+            'whatsapp' => $this->whatsapp($request),
+        ];
+    }
+
+    /**
+     * A situação do WhatsApp para o rodapé do menu.
+     *
+     * Vai o que está gravado, nunca uma consulta ao servidor externo: isto roda
+     * em toda requisição do sistema, e falar com a Evolution aqui faria cada
+     * página esperar por um servidor de terceiro — inclusive quando ele estiver
+     * fora. Quem atualiza é a própria tela, em segundo plano, quando o dado
+     * está velho.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function whatsapp(Request $request): ?array
+    {
+        // Só quem pode arrumar precisa ver: a tela de configuração é do admin.
+        if (! $request->user()?->isAdmin()) {
+            return null;
+        }
+
+        $connection = WhatsappConnection::current();
+
+        if ($connection === null) {
+            return ['configured' => false, 'status' => WhatsappConnection::STATUS_DISCONNECTED, 'checked_at' => null, 'stale' => true];
+        }
+
+        return [
+            'configured' => true,
+            'status' => $connection->status,
+            'checked_at' => $connection->checked_at?->diffForHumans(),
+            // Velho demais para servir de resposta: a tela vai conferir sozinha.
+            'stale' => $connection->checked_at === null || $connection->checked_at->lt(now()->subMinutes(10)),
         ];
     }
 }

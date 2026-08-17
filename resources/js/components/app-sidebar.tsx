@@ -1,5 +1,6 @@
 import { NavMain } from '@/components/nav-main';
-import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
+import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
+import { WhatsappStatusIndicator } from '@/components/whatsapp-status';
 import { visibleNavigation } from '@/config/navigation';
 import { type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
@@ -25,6 +26,10 @@ export function AppSidebar() {
             <SidebarContent>
                 <NavMain items={visibleNavigation(auth.permissions)} />
             </SidebarContent>
+
+            <SidebarFooter>
+                <WhatsappStatusIndicator />
+            </SidebarFooter>
         </Sidebar>
     );
 }

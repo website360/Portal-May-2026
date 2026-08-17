@@ -528,4 +528,58 @@ class WhatsappTest extends TestCase
             $this->assertStringContainsString($esperado, $resultado['message'], "bruto: {$bruto}");
         }
     }
+    // ── Situação no rodapé do menu ───────────────────────────────────────────
+
+    /**
+     * O rodapé recebe o estado gravado, nunca uma consulta ao servidor.
+     *
+     * Falar com a Evolution aqui faria toda página do sistema esperar por um
+     * serviço de terceiro — inclusive quando ele estivesse fora.
+     */
+    public function test_the_footer_gets_the_stored_state_without_calling_the_server(): void
+    {
+        $this->conexaoPronta()->update([
+            'status' => WhatsappConnection::STATUS_CONNECTED,
+            'checked_at' => now()->subMinutes(2),
+        ]);
+
+        Http::fake();
+
+        $this->get('/dashboard')->assertInertia(
+            fn ($page) => $page->where('whatsapp.configured', true)
+                ->where('whatsapp.status', WhatsappConnection::STATUS_CONNECTED)
+                ->where('whatsapp.stale', false)
+        );
+
+        Http::assertNothingSent();
+    }
+
+    /** Verificado há muito tempo: a tela confere sozinha, em segundo plano. */
+    public function test_an_old_check_is_marked_stale(): void
+    {
+        $this->conexaoPronta()->update([
+            'status' => WhatsappConnection::STATUS_CONNECTED,
+            'checked_at' => now()->subHour(),
+        ]);
+
+        $this->get('/dashboard')->assertInertia(fn ($page) => $page->where('whatsapp.stale', true));
+    }
+
+    /** Sem conexão cadastrada, o rodapé convida a configurar. */
+    public function test_without_a_connection_the_footer_says_so(): void
+    {
+        $this->get('/dashboard')->assertInertia(
+            fn ($page) => $page->where('whatsapp.configured', false)->where('whatsapp.stale', true)
+        );
+    }
+
+    /** Quem não pode arrumar não precisa ver: a tela de configuração é do admin. */
+    public function test_a_member_does_not_get_the_indicator(): void
+    {
+        $this->conexaoPronta();
+
+        $this->actingAs(User::factory()->member()->create(['permissions' => ['dashboard' => 'read']]))
+            ->get('/dashboard')
+            ->assertInertia(fn ($page) => $page->where('whatsapp', null));
+    }
 }

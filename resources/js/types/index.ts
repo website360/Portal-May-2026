@@ -30,10 +30,20 @@ export interface NavItem {
     isActive?: boolean;
 }
 
+/** Situacao do WhatsApp para o rodape do menu; nula para quem nao e admin. */
+export interface WhatsappStatus {
+    configured: boolean;
+    status: 'connected' | 'connecting' | 'disconnected';
+    checked_at: string | null;
+    /** Gravado ha tempo demais: a tela confere sozinha, em segundo plano. */
+    stale: boolean;
+}
+
 export interface SharedData {
     name: string;
     auth: Auth;
     flash: { success: string | null; warning: string | null };
+    whatsapp: WhatsappStatus | null;
     [key: string]: unknown;
 }
 
