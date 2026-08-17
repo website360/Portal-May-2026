@@ -4,7 +4,7 @@ import { LucideIcon } from 'lucide-react';
 export type PermissionLevel = 'none' | 'read' | 'write';
 
 /** Chave de cada modulo controlado por permissao. */
-export type ModuleKey = 'dashboard' | 'tarefas' | 'clientes' | 'dominios' | 'manutencao' | 'contratos' | 'financeiro' | 'configuracoes';
+export type ModuleKey = 'dashboard' | 'tarefas' | 'clientes' | 'dominios' | 'manutencao' | 'contratos' | 'financeiro' | 'ferramentas' | 'configuracoes';
 
 export interface Auth {
     user: User;

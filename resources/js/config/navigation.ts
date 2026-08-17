@@ -1,5 +1,5 @@
 import type { ModuleKey, PermissionLevel } from '@/types';
-import { FileText, Globe, LayoutGrid, ListTodo, Users, Wallet, Wrench, type LucideIcon } from 'lucide-react';
+import { Blocks, FileText, Globe, LayoutGrid, ListTodo, Users, Wallet, Wrench, type LucideIcon } from 'lucide-react';
 
 export interface NavLink {
     title: string;
@@ -27,6 +27,7 @@ export const navigation: NavLink[] = [
     { title: 'Manutenção', href: '/manutencao', icon: Wrench, module: 'manutencao' },
     { title: 'Contratos', href: '/contratos', icon: FileText, module: 'contratos' },
     { title: 'Financeiro', href: '/financeiro', icon: Wallet, module: 'financeiro' },
+    { title: 'Ferramentas', href: '/ferramentas', icon: Blocks, module: 'ferramentas' },
 ];
 
 /**

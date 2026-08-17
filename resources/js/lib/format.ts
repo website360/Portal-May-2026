@@ -15,6 +15,19 @@ export function formatCurrency(value: number): string {
     return currency.format(value);
 }
 
+const exact = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+
+/**
+ * Valor com os centavos.
+ *
+ * `formatCurrency` arredonda para inteiro, o que serve para o resumo de um
+ * painel e falha em qualquer número que vire cobrança: R$ 1.271,60 saindo como
+ * "R$ 1.272" é sessenta centavos inventados.
+ */
+export function formatMoney(value: number): string {
+    return exact.format(value);
+}
+
 export function formatNumber(value: number): string {
     return decimal.format(value);
 }
