@@ -148,7 +148,7 @@ final class MaintenanceReport
         foreach ($this->maintenance->items ?? [] as $item) {
             $line = match ($item['result'] ?? null) {
                 MaintenanceChecklist::DONE => "✅ {$item['label']}",
-                MaintenanceChecklist::NOT_NEEDED => "➖ {$item['label']} (não era necessário)",
+                MaintenanceChecklist::NOT_NEEDED => "☑️ {$item['label']} (não era necessário)",
                 default => null,
             };
 
@@ -187,3 +187,4 @@ final class MaintenanceReport
         return MessageComposer::render(self::defaultBody(), $this->variables());
     }
 }
+

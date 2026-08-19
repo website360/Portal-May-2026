@@ -1,8 +1,11 @@
 <?php
 
+use App\Http\Controllers\Settings\AsaasController;
+use App\Http\Controllers\Settings\BrandController;
 use App\Http\Controllers\Settings\ContractTemplateController;
 use App\Http\Controllers\Settings\CostCenterController;
 use App\Http\Controllers\Settings\FinanceCategoryController;
+use App\Http\Controllers\Settings\FinanceTagController;
 use App\Http\Controllers\Settings\MailController;
 use App\Http\Controllers\Settings\MessageTemplateController;
 use App\Http\Controllers\Settings\PasswordController;
@@ -48,6 +51,13 @@ Route::middleware('auth')->prefix('configuracoes')->group(function () {
         Route::put('email', [MailController::class, 'update'])->name('email.update');
         Route::post('email/teste', [MailController::class, 'test'])->name('email.teste');
 
+        Route::get('marca', [BrandController::class, 'index'])->name('marca.index');
+        Route::post('marca', [BrandController::class, 'update'])->name('marca.update');
+
+        Route::get('asaas', [AsaasController::class, 'index'])->name('asaas.index');
+        Route::put('asaas', [AsaasController::class, 'update'])->name('asaas.update');
+        Route::post('asaas/teste', [AsaasController::class, 'test'])->name('asaas.teste');
+
         Route::get('usuarios', [UserController::class, 'index'])->name('usuarios.index');
         Route::post('usuarios', [UserController::class, 'store'])->name('usuarios.store');
         Route::put('usuarios/{usuario}', [UserController::class, 'update'])->name('usuarios.update');
@@ -92,5 +102,11 @@ Route::middleware('auth')->prefix('configuracoes')->group(function () {
         Route::post('categorias', [FinanceCategoryController::class, 'store'])->name('categorias.store');
         Route::put('categorias/{categoria}', [FinanceCategoryController::class, 'update'])->name('categorias.update');
         Route::delete('categorias/{categoria}', [FinanceCategoryController::class, 'destroy'])->name('categorias.destroy');
+
+        Route::get('etiquetas', [FinanceTagController::class, 'index'])->name('etiquetas.index');
+        Route::post('etiquetas', [FinanceTagController::class, 'store'])->name('etiquetas.store');
+        Route::put('etiquetas/{etiqueta}', [FinanceTagController::class, 'update'])->name('etiquetas.update');
+        Route::delete('etiquetas/{etiqueta}', [FinanceTagController::class, 'destroy'])->name('etiquetas.destroy');
     });
 });
+

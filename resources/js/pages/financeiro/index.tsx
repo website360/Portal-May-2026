@@ -5,6 +5,9 @@ import { Pagination } from '@/components/pagination';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { MultiSelect } from '@/components/ui/multi-select';
 import { SortableHeader, type SortDirection } from '@/components/ui/sortable-header';
@@ -14,9 +17,9 @@ import AppLayout from '@/layouts/app-layout';
 import { formatCurrency, formatNumber } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { type BreadcrumbItem, type Paginated } from '@/types';
-import type { CostCenter, FinanceCategory, FinanceFilters, FinanceSummary, Transaction } from '@/types/finance';
+import type { CostCenter, FinanceCategory, FinanceFilters, FinanceSummary, FinanceTag, Transaction } from '@/types/finance';
 import { Head, Link, router } from '@inertiajs/react';
-import { ArrowDownLeft, ArrowUpRight, Banknote, CircleAlert, CircleCheck, Clock, Layers, Plus, RefreshCw, Search, Wallet } from 'lucide-react';
+import { ArrowDownLeft, ExternalLink, ArrowUpRight, Banknote, CircleAlert, CircleCheck, Clock, Layers, MessageCircle, Plug, Plus, RefreshCw, Search, Tag, Wallet } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -34,6 +37,7 @@ interface FinanceiroPageProps {
     paymentMethods: { id: number; name: string }[];
     suppliers: { id: number; name: string; search?: string }[];
     projected: ProjectedCharge[];
+    financeTags: FinanceTag[];
     months: string[];
 }
 
@@ -48,6 +52,7 @@ export default function Financeiro({
     suppliers,
     months,
     projected,
+    financeTags,
 }: FinanceiroPageProps) {
     const [search, setSearch] = useState(filters.search);
     const [formOpen, setFormOpen] = useState(false);
@@ -105,7 +110,24 @@ export default function Financeiro({
                         <p className="text-muted-foreground text-sm">Contas a pagar e a receber, separadas por centro de custo.</p>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-start gap-2">
+                        <div className="flex flex-col items-start gap-1">
+                            <ChargeAllButton />
+                            <Link
+                                href={'/financeiro/cobrancas'}
+                                className="text-muted-foreground hover:text-foreground pl-0.5 text-xs underline-offset-2 hover:underline"
+                            >
+                                Histórico de cobranças
+                            </Link>
+                        </div>
+
+                        <Button variant="outline" asChild>
+                            <Link href="/financeiro/conciliacao">
+                                <Plug />
+                                Conciliar Asaas
+                            </Link>
+                        </Button>
+
                         <Button variant="outline" asChild>
                             <Link href={route('financeiro.recorrencias.index')}>
                                 <RefreshCw />
@@ -270,6 +292,17 @@ export default function Financeiro({
                             emptyText="Nenhuma categoria."
                         />
 
+                        <MultiSelect
+                            aria-label="Etiquetas"
+                            className="w-48"
+                            value={filters.tags}
+                            onChange={(value) => apply({ tags: value })}
+                            options={financeTags.map((tag) => ({ value: String(tag.id), label: tag.name }))}
+                            allLabel="Todas as etiquetas"
+                            searchPlaceholder="Buscar etiqueta…"
+                            emptyText="Nenhuma etiqueta."
+                        />
+
                         <MonthFilter value={filters.month} options={months} onChange={(month) => apply({ month })} />
 
                         {hasFilters && (
@@ -328,7 +361,7 @@ export default function Financeiro({
                                     </thead>
                                     <tbody>
                                         {transactions.data.map((transaction) => (
-                                            <Row key={transaction.id} transaction={transaction} onOpen={() => open(transaction)} />
+                                            <Row key={transaction.id} transaction={transaction} onOpen={() => open(transaction)} allTags={financeTags} />
                                         ))}
 
                                         {/*
@@ -366,7 +399,7 @@ export default function Financeiro({
     );
 }
 
-function Row({ transaction, onOpen }: { transaction: Transaction; onOpen: () => void }) {
+function Row({ transaction, onOpen, allTags }: { transaction: Transaction; onOpen: () => void; allTags: FinanceTag[] }) {
     const stop = (event: React.MouseEvent) => event.stopPropagation();
     const isPayable = transaction.type === 'payable';
     const center = colorOf(transaction.cost_center?.color);
@@ -387,6 +420,18 @@ function Row({ transaction, onOpen }: { transaction: Transaction; onOpen: () => 
                 ) : (
                     <span className="text-muted-foreground">{transaction.counterpart ?? '—'}</span>
                 )}
+                {transaction.invoice_url && (
+                    <a
+                        href={transaction.invoice_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={stop}
+                        className="text-primary mt-0.5 inline-flex items-center gap-1 text-xs hover:underline"
+                    >
+                        Fatura {transaction.invoice_number ?? ''}
+                        <ExternalLink className="size-3" />
+                    </a>
+                )}
             </td>
 
             <td className="px-4 py-3">
@@ -398,12 +443,23 @@ function Row({ transaction, onOpen }: { transaction: Transaction; onOpen: () => 
                         <ArrowUpRight className="text-success size-3.5 shrink-0" aria-label="A receber" />
                     )}
                     <span className="truncate">{transaction.description}</span>
+                    <span onClick={stop} className="shrink-0">
+                        <TagEditor transaction={transaction} allTags={allTags} />
+                    </span>
                 </div>
 
                 {/* Fornecedor só quando há cliente na coluna ao lado — senão repetiria. */}
                 {transaction.client && transaction.counterpart && (
                     <div className="text-muted-foreground truncate text-xs">{transaction.counterpart}</div>
                 )}
+
+                <div className="mt-1 flex flex-wrap items-center gap-1" onClick={stop}>
+                    {transaction.tags.map((tag) => (
+                        <Badge key={tag.id} variant="outline" className={cn('text-[10px]', colorOf(tag.color).chip)}>
+                            {tag.name}
+                        </Badge>
+                    ))}
+                </div>
             </td>
 
             <td className="px-4 py-3">
@@ -432,8 +488,15 @@ function Row({ transaction, onOpen }: { transaction: Transaction; onOpen: () => 
             </td>
 
             <td className="px-4 py-3">
-                <div className={cn('tabular text-sm', transaction.status === 'overdue' ? 'text-destructive font-medium' : 'text-muted-foreground')}>
-                    {transaction.due_date_label}
+                <div className="flex items-center gap-1.5">
+                    <span className={cn('tabular text-sm', transaction.status === 'overdue' ? 'text-destructive font-medium' : 'text-muted-foreground')}>
+                        {transaction.due_date_label}
+                    </span>
+                    {transaction.can_charge && (
+                        <span onClick={stop}>
+                            <ChargeButton transaction={transaction} />
+                        </span>
+                    )}
                 </div>
                 {transaction.paid_at_label && <div className="tabular text-muted-foreground text-xs">pago {transaction.paid_at_label}</div>}
             </td>
@@ -446,7 +509,7 @@ function Row({ transaction, onOpen }: { transaction: Transaction; onOpen: () => 
 
             <td className="py-3 pr-6 pl-4" onClick={stop}>
                 {/* O seletor tem largura própria; justify-end é o que o encosta na borda. */}
-                <div className="flex justify-end">
+                <div className="flex items-center justify-end gap-1.5">
                     <StatusPicker
                         value={transaction.status}
                         options={transactionStatusOptions}
@@ -612,5 +675,297 @@ function KindBadge({ kind, number, total }: { kind: Transaction['kind']; number:
                 {position && <span className="tabular text-muted-foreground ml-1">{position}</span>}
             </span>
         </span>
+    );
+}
+
+
+interface ChargeRecipient {
+    channel: string;
+    kind: string;
+    name: string;
+    contact: string;
+    ok: boolean;
+}
+
+function ChargeButton({ transaction }: { transaction: Transaction }) {
+    const [open, setOpen] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [sending, setSending] = useState(false);
+    const [preview, setPreview] = useState<{ text: string; recipients: ChargeRecipient[] } | null>(null);
+    const charged = transaction.charged_at;
+
+    function openDialog() {
+        setOpen(true);
+        setPreview(null);
+        setLoading(true);
+        fetch(`/financeiro/${transaction.id}/cobrar/previa`, { headers: { Accept: 'application/json' } })
+            .then((r) => r.json())
+            .then((d) => setPreview(d))
+            .catch(() => setPreview({ text: '', recipients: [] }))
+            .finally(() => setLoading(false));
+    }
+
+    const canSend = !!preview && preview.recipients.some((r) => r.ok);
+
+    return (
+        <>
+            <button
+                type="button"
+                onClick={openDialog}
+                title={charged ? `Cobrado em ${charged} — clique para cobrar de novo` : transaction.charge_error ? `Última tentativa falhou: ${transaction.charge_error}` : 'Conferir e enviar cobrança'}
+                aria-label="Cobrar"
+                className={cn(
+                    'inline-flex size-5 shrink-0 items-center justify-center rounded transition-colors',
+                    charged ? 'text-success hover:bg-success/10' : 'text-primary hover:bg-primary/10',
+                )}
+            >
+                <MessageCircle className="size-3.5" />
+            </button>
+
+            <Dialog open={open} onOpenChange={setOpen}>
+                <DialogContent className="sm:max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle>Conferir cobrança</DialogTitle>
+                        <DialogDescription>Veja o texto exato e para quem vai, antes de enviar.</DialogDescription>
+                    </DialogHeader>
+
+                    {loading && <p className="text-muted-foreground text-sm">Carregando…</p>}
+
+                    {preview && (
+                        <div className="grid gap-4">
+                            <div className="grid gap-1.5">
+                                <p className="text-sm font-medium">Para</p>
+                                {preview.recipients.length === 0 ? (
+                                    <p className="text-warning text-sm">Nenhum destinatário — confira o modelo em Configurações → Mensagens.</p>
+                                ) : (
+                                    <ul className="grid gap-1.5">
+                                        {preview.recipients.map((r, i) => (
+                                            <li key={i} className="flex flex-wrap items-center gap-2 text-sm">
+                                                <Badge variant={r.ok ? 'secondary' : 'warning'}>{r.channel}</Badge>
+                                                <span className="font-medium">{r.name || r.kind}</span>
+                                                <span className="text-muted-foreground">{r.ok ? r.contact : 'sem contato cadastrado'}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </div>
+
+                            <div className="grid gap-1.5">
+                                <p className="text-sm font-medium">Mensagem</p>
+                                <div className="bg-muted/40 max-h-64 overflow-y-auto rounded-lg border p-3 text-sm whitespace-pre-wrap">{preview.text}</div>
+                            </div>
+
+                            {charged && <p className="text-muted-foreground text-xs">Já cobrada em {charged} — reenviar pode duplicar a mensagem para o cliente.</p>}
+                        </div>
+                    )}
+
+                    <DialogFooter>
+                        <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+                            Cancelar
+                        </Button>
+                        <Button
+                            type="button"
+                            loading={sending}
+                            disabled={!canSend}
+                            onClick={() => {
+                                setSending(true);
+                                router.post(`/financeiro/${transaction.id}/cobrar`, {}, {
+                                    preserveScroll: true,
+                                    onFinish: () => {
+                                        setSending(false);
+                                        setOpen(false);
+                                    },
+                                });
+                            }}
+                        >
+                            {!sending && <MessageCircle />}
+                            Enviar cobrança
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        </>
+    );
+}
+
+interface OverdueItem {
+    id: number;
+    client: string | null;
+    description: string;
+    amount: number;
+    due_date_label: string;
+    days_late: number;
+    has_phone: boolean;
+}
+
+function ChargeAllButton() {
+    const [open, setOpen] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [sending, setSending] = useState(false);
+    const [items, setItems] = useState<OverdueItem[]>([]);
+    const [selected, setSelected] = useState<number[]>([]);
+
+    function openDialog() {
+        setOpen(true);
+        setItems([]);
+        setLoading(true);
+        fetch('/financeiro/cobrar-vencidas/previa', { headers: { Accept: 'application/json' } })
+            .then((r) => r.json())
+            .then((d: { items: OverdueItem[] }) => {
+                setItems(d.items ?? []);
+                // Já vêm marcadas as que dá para enviar (têm telefone).
+                setSelected((d.items ?? []).filter((i) => i.has_phone).map((i) => i.id));
+            })
+            .catch(() => setItems([]))
+            .finally(() => setLoading(false));
+    }
+
+    function toggle(id: number) {
+        setSelected((sel) => (sel.includes(id) ? sel.filter((x) => x !== id) : [...sel, id]));
+    }
+
+    return (
+        <>
+            <Button type="button" variant="outline" onClick={openDialog}>
+                <MessageCircle />
+                Cobrar vencidas
+            </Button>
+
+            <Dialog open={open} onOpenChange={setOpen}>
+                <DialogContent className="sm:max-w-xl">
+                    <DialogHeader>
+                        <DialogTitle>Cobrar faturas vencidas</DialogTitle>
+                        <DialogDescription>Marque quem vai receber a cobrança. Desmarque quem você não quer cobrar agora.</DialogDescription>
+                    </DialogHeader>
+
+                    {loading && <p className="text-muted-foreground text-sm">Carregando…</p>}
+
+                    {!loading && items.length === 0 && <p className="text-muted-foreground text-sm">Nenhuma fatura a receber vencida em aberto.</p>}
+
+                    {items.length > 0 && (
+                        <div className="grid max-h-96 gap-0.5 overflow-y-auto">
+                            {items.map((item) => (
+                                <label
+                                    key={item.id}
+                                    className={cn('hover:bg-muted/40 flex cursor-pointer items-center gap-3 rounded-md px-2 py-2', !item.has_phone && 'opacity-70')}
+                                >
+                                    <Checkbox checked={selected.includes(item.id)} onCheckedChange={() => toggle(item.id)} disabled={!item.has_phone} />
+                                    <div className="min-w-0 flex-1">
+                                        <div className="flex items-center gap-2">
+                                            <span className="truncate font-medium">{item.client ?? '—'}</span>
+                                            <Badge variant="destructive">{item.days_late} dias</Badge>
+                                        </div>
+                                        <div className="text-muted-foreground truncate text-xs">
+                                            {item.description} · venc. {item.due_date_label}
+                                        </div>
+                                        {!item.has_phone && <div className="text-warning text-xs">Sem telefone cadastrado — não recebe WhatsApp.</div>}
+                                    </div>
+                                    <span className="tabular shrink-0 text-sm font-medium">{formatCurrency(item.amount)}</span>
+                                </label>
+                            ))}
+                        </div>
+                    )}
+
+                    <DialogFooter>
+                        <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+                            Cancelar
+                        </Button>
+                        <Button
+                            type="button"
+                            loading={sending}
+                            disabled={selected.length === 0}
+                            onClick={() => {
+                                setSending(true);
+                                router.post('/financeiro/cobrar-vencidas', { ids: selected }, {
+                                    preserveScroll: true,
+                                    onFinish: () => {
+                                        setSending(false);
+                                        setOpen(false);
+                                    },
+                                });
+                            }}
+                        >
+                            <MessageCircle />
+                            Enviar {selected.length > 0 ? `(${selected.length})` : ''}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        </>
+    );
+}
+
+
+function TagEditor({ transaction, allTags }: { transaction: Transaction; allTags: FinanceTag[] }) {
+    const [open, setOpen] = useState(false);
+    const [saving, setSaving] = useState(false);
+    const [selected, setSelected] = useState<number[]>(transaction.tags.map((t) => t.id));
+
+    useEffect(() => {
+        if (open) setSelected(transaction.tags.map((t) => t.id));
+    }, [open, transaction.tags]);
+
+    function toggle(id: number) {
+        setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+    }
+
+    return (
+        <>
+            <button
+                type="button"
+                onClick={() => setOpen(true)}
+                title="Editar etiquetas"
+                aria-label="Editar etiquetas do lançamento"
+                className="text-muted-foreground hover:bg-muted hover:text-foreground inline-flex size-5 items-center justify-center rounded transition-colors"
+            >
+                <Tag className="size-3.5" />
+            </button>
+
+            <Dialog open={open} onOpenChange={setOpen}>
+                <DialogContent className="sm:max-w-sm">
+                    <DialogHeader>
+                        <DialogTitle>Etiquetas</DialogTitle>
+                        <DialogDescription>Marque as etiquetas deste lançamento.</DialogDescription>
+                    </DialogHeader>
+
+                    {allTags.length === 0 ? (
+                        <p className="text-muted-foreground text-sm">Nenhuma etiqueta criada ainda. Crie em Configurações → Financeiro → Etiquetas.</p>
+                    ) : (
+                        <div className="grid max-h-72 gap-0.5 overflow-y-auto">
+                            {allTags.map((tag) => (
+                                <label key={tag.id} className="hover:bg-muted/40 flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 text-sm">
+                                    <Checkbox checked={selected.includes(tag.id)} onCheckedChange={() => toggle(tag.id)} />
+                                    <span className={cn('size-2.5 shrink-0 rounded-full', colorOf(tag.color).dot)} />
+                                    {tag.name}
+                                </label>
+                            ))}
+                        </div>
+                    )}
+
+                    <DialogFooter>
+                        <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+                            Cancelar
+                        </Button>
+                        <Button
+                            type="button"
+                            loading={saving}
+                            disabled={allTags.length === 0}
+                            onClick={() => {
+                                setSaving(true);
+                                router.put(`/financeiro/${transaction.id}/etiquetas`, { tags: selected }, {
+                                    preserveScroll: true,
+                                    onFinish: () => {
+                                        setSaving(false);
+                                        setOpen(false);
+                                    },
+                                });
+                            }}
+                        >
+                            Salvar
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        </>
     );
 }

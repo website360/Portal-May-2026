@@ -168,50 +168,56 @@
     --border-40: hsl(220 13% 91% / 0.4);
 }
 
+/*
+  Tema escuro portado do Figma "Dashdark X" (Free Dark Admin Dashboards).
+  Fundo #081028, cards #0B1739, primária índigo #6C72FF, gráficos da paleta
+  do dashboard. Valores em HSL para casar com o resto do arquivo.
+*/
 .dark {
-    --background: hsl(224 47% 6%);
-    --foreground: hsl(210 40% 98%);
-    --card: hsl(222 44% 9%);
-    --card-foreground: hsl(210 40% 98%);
-    --popover: hsl(222 44% 9%);
-    --popover-foreground: hsl(210 40% 98%);
-    --primary: hsl(217 91% 60%);
-    --primary-foreground: hsl(222 47% 11%);
-    --secondary: hsl(217 33% 17%);
-    --secondary-foreground: hsl(210 40% 98%);
-    --muted: hsl(217 33% 15%);
-    --muted-foreground: hsl(215 20% 65%);
-    --accent: hsl(222 47% 16%);
-    --accent-foreground: hsl(213 94% 78%);
-    --destructive: hsl(0 63% 50%);
-    --destructive-foreground: hsl(210 40% 98%);
-    --success: hsl(142 64% 42%);
-    --success-foreground: hsl(210 40% 98%);
-    --warning: hsl(38 92% 50%);
-    --warning-foreground: hsl(222 47% 11%);
-    --border: hsl(217 33% 18%);
-    --input: hsl(217 33% 20%);
-    --ring: hsl(217 91% 60%);
+    /* Neutros em cinza/preto (zinc), sem o azul-marinho. Accent e gráficos mantidos. */
+    --background: #0b0b0e;
+    --foreground: #fafafa;
+    --card: #161618;
+    --card-foreground: #fafafa;
+    --popover: #161618;
+    --popover-foreground: #fafafa;
+    --primary: #6c72ff;
+    --primary-foreground: #ffffff;
+    --secondary: #232327;
+    --secondary-foreground: #fafafa;
+    --muted: #161619;
+    --muted-foreground: #a1a1aa;
+    --accent: #1f1f23;
+    --accent-foreground: #d4d4d8;
+    --destructive: #e5484d;
+    --destructive-foreground: #ffffff;
+    --success: #14ca74;
+    --success-foreground: #ffffff;
+    --warning: #fdb52a;
+    --warning-foreground: #0b0b0e;
+    --border: #29292e;
+    --input: #34343a;
+    --ring: #6c72ff;
 
-    --chart-1: hsl(217 91% 60%);
-    --chart-2: hsl(199 89% 55%);
-    --chart-3: hsl(142 64% 48%);
-    --chart-4: hsl(38 92% 55%);
-    --chart-5: hsl(262 83% 68%);
+    --chart-1: #6c72ff;
+    --chart-2: #cb3cff;
+    --chart-3: #00c2ff;
+    --chart-4: #14ca74;
+    --chart-5: #fdb52a;
 
-    --sidebar-background: hsl(224 45% 7%);
-    --sidebar-foreground: hsl(210 40% 98%);
-    --sidebar-primary: hsl(217 91% 60%);
-    --sidebar-primary-foreground: hsl(222 47% 11%);
-    --sidebar-accent: hsl(222 47% 14%);
-    --sidebar-accent-foreground: hsl(213 94% 78%);
-    --sidebar-border: hsl(217 33% 15%);
-    --sidebar-ring: hsl(217 91% 60%);
+    --sidebar-background: #0b0b0e;
+    --sidebar-foreground: #a1a1aa;
+    --sidebar-primary: #6c72ff;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #1a1a1e;
+    --sidebar-accent-foreground: #ffffff;
+    --sidebar-border: #29292e;
+    --sidebar-ring: #6c72ff;
 
-    --primary-10: hsl(217 91% 60% / 0.1);
-    --primary-12: hsl(217 91% 60% / 0.12);
-    --primary-35: hsl(217 91% 60% / 0.35);
-    --border-40: hsl(217 33% 18% / 0.4);
+    --primary-10: #6c72ff1a;
+    --primary-12: #6c72ff1f;
+    --primary-35: #6c72ff59;
+    --border-40: #29292e66;
 }
 
 @layer base {
@@ -318,4 +324,85 @@
 
 * {
     scrollbar-color: var(--border) transparent;
+}
+
+/*
+  Cores de destaque (accent) — personalização por usuário via data-accent no <html>.
+  Azul é o padrão (sem atributo). Cada accent sobrescreve --primary e derivados,
+  em claro (:root:not(.dark)) e escuro (.dark) separadamente. Os tokens de fundo,
+  texto e bordas continuam vindo de :root / .dark — só o destaque muda.
+*/
+:root:not(.dark)[data-accent='violet'] {
+    --primary: hsl(262 83% 58%); --primary-foreground: hsl(0 0% 100%); --ring: hsl(262 83% 58%);
+    --accent: hsl(262 83% 97%); --accent-foreground: hsl(262 83% 42%);
+    --sidebar-primary: hsl(262 83% 58%); --sidebar-primary-foreground: hsl(0 0% 100%); --sidebar-ring: hsl(262 83% 58%);
+    --sidebar-accent: hsl(262 83% 96%); --sidebar-accent-foreground: hsl(262 83% 42%); --chart-1: hsl(262 83% 58%);
+    --primary-10: hsl(262 83% 58% / 0.1); --primary-12: hsl(262 83% 58% / 0.12); --primary-35: hsl(262 83% 58% / 0.35);
+}
+.dark[data-accent='violet'] {
+    --primary: hsl(263 90% 66%); --primary-foreground: hsl(222 47% 11%); --ring: hsl(263 90% 66%);
+    --accent: hsl(263 40% 18%); --accent-foreground: hsl(263 90% 82%);
+    --sidebar-primary: hsl(263 90% 66%); --sidebar-primary-foreground: hsl(222 47% 11%); --sidebar-ring: hsl(263 90% 66%);
+    --sidebar-accent: hsl(263 40% 15%); --sidebar-accent-foreground: hsl(263 90% 82%); --chart-1: hsl(263 90% 66%);
+    --primary-10: hsl(263 90% 66% / 0.1); --primary-12: hsl(263 90% 66% / 0.12); --primary-35: hsl(263 90% 66% / 0.35);
+}
+
+:root:not(.dark)[data-accent='emerald'] {
+    --primary: hsl(160 84% 39%); --primary-foreground: hsl(0 0% 100%); --ring: hsl(160 84% 39%);
+    --accent: hsl(160 84% 95%); --accent-foreground: hsl(160 84% 27%);
+    --sidebar-primary: hsl(160 84% 39%); --sidebar-primary-foreground: hsl(0 0% 100%); --sidebar-ring: hsl(160 84% 39%);
+    --sidebar-accent: hsl(160 84% 94%); --sidebar-accent-foreground: hsl(160 84% 27%); --chart-1: hsl(160 84% 39%);
+    --primary-10: hsl(160 84% 39% / 0.1); --primary-12: hsl(160 84% 39% / 0.12); --primary-35: hsl(160 84% 39% / 0.35);
+}
+.dark[data-accent='emerald'] {
+    --primary: hsl(158 74% 44%); --primary-foreground: hsl(222 47% 11%); --ring: hsl(158 74% 44%);
+    --accent: hsl(158 40% 16%); --accent-foreground: hsl(158 70% 74%);
+    --sidebar-primary: hsl(158 74% 44%); --sidebar-primary-foreground: hsl(222 47% 11%); --sidebar-ring: hsl(158 74% 44%);
+    --sidebar-accent: hsl(158 40% 14%); --sidebar-accent-foreground: hsl(158 70% 74%); --chart-1: hsl(158 74% 44%);
+    --primary-10: hsl(158 74% 44% / 0.1); --primary-12: hsl(158 74% 44% / 0.12); --primary-35: hsl(158 74% 44% / 0.35);
+}
+
+:root:not(.dark)[data-accent='rose'] {
+    --primary: hsl(347 77% 50%); --primary-foreground: hsl(0 0% 100%); --ring: hsl(347 77% 50%);
+    --accent: hsl(347 77% 96%); --accent-foreground: hsl(347 77% 40%);
+    --sidebar-primary: hsl(347 77% 50%); --sidebar-primary-foreground: hsl(0 0% 100%); --sidebar-ring: hsl(347 77% 50%);
+    --sidebar-accent: hsl(347 77% 95%); --sidebar-accent-foreground: hsl(347 77% 40%); --chart-1: hsl(347 77% 50%);
+    --primary-10: hsl(347 77% 50% / 0.1); --primary-12: hsl(347 77% 50% / 0.12); --primary-35: hsl(347 77% 50% / 0.35);
+}
+.dark[data-accent='rose'] {
+    --primary: hsl(346 84% 60%); --primary-foreground: hsl(222 47% 11%); --ring: hsl(346 84% 60%);
+    --accent: hsl(346 40% 20%); --accent-foreground: hsl(346 90% 82%);
+    --sidebar-primary: hsl(346 84% 60%); --sidebar-primary-foreground: hsl(222 47% 11%); --sidebar-ring: hsl(346 84% 60%);
+    --sidebar-accent: hsl(346 40% 17%); --sidebar-accent-foreground: hsl(346 90% 82%); --chart-1: hsl(346 84% 60%);
+    --primary-10: hsl(346 84% 60% / 0.1); --primary-12: hsl(346 84% 60% / 0.12); --primary-35: hsl(346 84% 60% / 0.35);
+}
+
+:root:not(.dark)[data-accent='amber'] {
+    --primary: hsl(32 95% 44%); --primary-foreground: hsl(0 0% 100%); --ring: hsl(32 95% 44%);
+    --accent: hsl(38 92% 95%); --accent-foreground: hsl(32 95% 34%);
+    --sidebar-primary: hsl(32 95% 44%); --sidebar-primary-foreground: hsl(0 0% 100%); --sidebar-ring: hsl(32 95% 44%);
+    --sidebar-accent: hsl(38 92% 94%); --sidebar-accent-foreground: hsl(32 95% 34%); --chart-1: hsl(32 95% 44%);
+    --primary-10: hsl(32 95% 44% / 0.1); --primary-12: hsl(32 95% 44% / 0.12); --primary-35: hsl(32 95% 44% / 0.35);
+}
+.dark[data-accent='amber'] {
+    --primary: hsl(35 92% 55%); --primary-foreground: hsl(222 47% 11%); --ring: hsl(35 92% 55%);
+    --accent: hsl(35 45% 18%); --accent-foreground: hsl(38 95% 76%);
+    --sidebar-primary: hsl(35 92% 55%); --sidebar-primary-foreground: hsl(222 47% 11%); --sidebar-ring: hsl(35 92% 55%);
+    --sidebar-accent: hsl(35 45% 15%); --sidebar-accent-foreground: hsl(38 95% 76%); --chart-1: hsl(35 92% 55%);
+    --primary-10: hsl(35 92% 55% / 0.1); --primary-12: hsl(35 92% 55% / 0.12); --primary-35: hsl(35 92% 55% / 0.35);
+}
+
+:root:not(.dark)[data-accent='sky'] {
+    --primary: hsl(199 89% 48%); --primary-foreground: hsl(0 0% 100%); --ring: hsl(199 89% 48%);
+    --accent: hsl(199 89% 95%); --accent-foreground: hsl(199 89% 33%);
+    --sidebar-primary: hsl(199 89% 48%); --sidebar-primary-foreground: hsl(0 0% 100%); --sidebar-ring: hsl(199 89% 48%);
+    --sidebar-accent: hsl(199 89% 94%); --sidebar-accent-foreground: hsl(199 89% 33%); --chart-1: hsl(199 89% 48%);
+    --primary-10: hsl(199 89% 48% / 0.1); --primary-12: hsl(199 89% 48% / 0.12); --primary-35: hsl(199 89% 48% / 0.35);
+}
+.dark[data-accent='sky'] {
+    --primary: hsl(199 89% 55%); --primary-foreground: hsl(222 47% 11%); --ring: hsl(199 89% 55%);
+    --accent: hsl(199 45% 18%); --accent-foreground: hsl(199 90% 78%);
+    --sidebar-primary: hsl(199 89% 55%); --sidebar-primary-foreground: hsl(222 47% 11%); --sidebar-ring: hsl(199 89% 55%);
+    --sidebar-accent: hsl(199 45% 15%); --sidebar-accent-foreground: hsl(199 90% 78%); --chart-1: hsl(199 89% 55%);
+    --primary-10: hsl(199 89% 55% / 0.1); --primary-12: hsl(199 89% 55% / 0.12); --primary-35: hsl(199 89% 55% / 0.35);
 }

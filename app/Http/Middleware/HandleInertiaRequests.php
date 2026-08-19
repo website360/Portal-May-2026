@@ -39,6 +39,7 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'name' => config('app.name'),
+            'brand' => \App\Support\Brand::shared(),
             'auth' => [
                 'user' => $request->user(),
                 /*
@@ -96,3 +97,4 @@ class HandleInertiaRequests extends Middleware
         ];
     }
 }
+

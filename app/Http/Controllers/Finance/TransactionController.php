@@ -80,6 +80,7 @@ class TransactionController extends Controller
             'status' => self::asList($request->input('status')),
             'cost_center_id' => self::asList($request->input('cost_center_id')),
             'finance_category_id' => self::asList($request->input('finance_category_id')),
+            'tags' => self::asList($request->input('tags')),
             // Sem mês escolhido, o mês corrente: é o recorte de quem abre a tela
             // para saber o que vence agora, não o extrato desde sempre.
             'month' => $request->has('month') ? $request->string('month')->toString() : Carbon::today()->format('Y-m'),
@@ -94,6 +95,7 @@ class TransactionController extends Controller
             ->withStatuses($filters['status'])
             ->when($filters['cost_center_id'], fn ($query, $ids) => $query->whereIn('cost_center_id', $ids))
             ->when($filters['finance_category_id'], fn ($query, $ids) => $query->whereIn('finance_category_id', $ids))
+            ->when($filters['tags'], fn ($query, $ids) => $query->whereIn('id', \App\Support\FinanceTags::transactionIdsWith($ids)))
             ->inMonth($filters['month'])
             ->tap(fn ($query) => ListSorting::apply($query, self::SORTS, $sorting['sort'], $sorting['direction']))
             ->paginate(self::PER_PAGE)
@@ -110,6 +112,7 @@ class TransactionController extends Controller
             'paymentMethods' => PaymentMethod::where('active', true)->orderBy('name')->get(['id', 'name', 'color']),
             'suppliers' => Supplier::pickList(),
             'months' => $this->availableMonths(),
+            'financeTags' => \App\Support\FinanceTags::all(),
             'projected' => $this->projected($filters),
         ]);
     }
@@ -153,6 +156,7 @@ class TransactionController extends Controller
             ->when($filters['type'], fn ($query, $types) => $query->whereIn('type', $types))
             ->when($filters['cost_center_id'], fn ($query, $ids) => $query->whereIn('cost_center_id', $ids))
             ->when($filters['finance_category_id'], fn ($query, $ids) => $query->whereIn('finance_category_id', $ids))
+            ->when($filters['tags'], fn ($query, $ids) => $query->whereIn('id', \App\Support\FinanceTags::transactionIdsWith($ids)))
             ->get();
 
         // O que já virou conta no período não pode aparecer duas vezes.
@@ -481,10 +485,12 @@ class TransactionController extends Controller
     private function summary(array $filters): array
     {
         $month = $filters['month'];
+        $tagIds = ($filters['tags'] ?? []) !== [] ? \App\Support\FinanceTags::transactionIdsWith($filters['tags']) : null;
 
         $slice = fn (string $type, ?string $status = null) => Transaction::query()
             ->ofType($type)
             ->when($month, fn ($query) => $query->inMonth($month))
+            ->when($tagIds !== null, fn ($query) => $query->whereIn('id', $tagIds))
             ->when($status, fn ($query) => $query->withStatus($status));
 
         // Realizado usa o valor efetivamente baixado, que pode ter juros ou desconto.
@@ -513,11 +519,106 @@ class TransactionController extends Controller
         ];
     }
 
+    /** Cobra uma fatura (conta a receber) em aberto pelo WhatsApp. */
+    public function cobrar(Transaction $lancamento): RedirectResponse
+    {
+        if ($lancamento->type !== Transaction::TYPE_RECEIVABLE || $lancamento->paid_at !== null) {
+            return back()->with('warning', 'Só dá para cobrar uma conta a receber ainda em aberto.');
+        }
+
+        $result = (new \App\Support\ChargeReminder($lancamento))->send();
+
+        return back()->with($result['ok'] ? 'success' : 'warning', $result['message']);
+    }
+
+    /** Define as etiquetas de um lançamento. */
+    public function etiquetas(Request $request, Transaction $lancamento): RedirectResponse
+    {
+        \App\Support\FinanceTags::setForTransaction($lancamento->id, (array) $request->input('tags', []));
+
+        return back()->with('success', 'Etiquetas atualizadas.');
+    }
+
+    /** O que a cobrança enviaria (texto + destinatários), sem enviar. */
+    public function cobrancaPrevia(Transaction $lancamento): \Illuminate\Http\JsonResponse
+    {
+        return response()->json((new \App\Support\ChargeReminder($lancamento))->preview());
+    }
+
+    /** O histórico de cobranças enviadas. */
+    public function cobrancas(): Response
+    {
+        return Inertia::render('financeiro/cobrancas', [
+            'history' => \App\Support\Charges::history(),
+        ]);
+    }
+
+    /** Lista as faturas vencidas que entrariam na cobrança em massa, para a tela escolher. */
+    public function cobrarVencidasPrevia(): \Illuminate\Http\JsonResponse
+    {
+        $itens = Transaction::query()
+            ->where('type', Transaction::TYPE_RECEIVABLE)
+            ->whereNull('paid_at')
+            ->whereNotNull('client_id')
+            ->whereDate('due_date', '<', Carbon::today())
+            ->with('client')
+            ->orderBy('due_date')
+            ->get()
+            ->map(fn (Transaction $t) => [
+                'id' => $t->id,
+                'client' => $t->client?->display_name,
+                'description' => $t->description,
+                'amount' => (float) $t->amount,
+                'due_date_label' => $t->due_date->format('d/m/Y'),
+                'days_late' => \App\Support\LateFee::daysLate($t->due_date, Carbon::today()),
+                'has_phone' => filled($t->client?->phone),
+            ]);
+
+        return response()->json(['items' => $itens]);
+    }
+
+    /** Cobra todas as faturas a receber vencidas. */
+    public function cobrarVencidas(Request $request): RedirectResponse
+    {
+        $ids = array_map('intval', (array) $request->input('ids', []));
+
+        $vencidas = Transaction::query()
+            ->where('type', Transaction::TYPE_RECEIVABLE)
+            ->whereNull('paid_at')
+            ->whereNotNull('client_id')
+            ->whereDate('due_date', '<', Carbon::today())
+            ->when($ids !== [], fn ($query) => $query->whereIn('id', $ids))
+            ->with('client')
+            ->get();
+
+        if ($vencidas->isEmpty()) {
+            return back()->with('warning', 'Nenhuma fatura vencida para cobrar.');
+        }
+
+        $ok = 0;
+        $falhas = 0;
+
+        foreach ($vencidas as $lancamento) {
+            (new \App\Support\ChargeReminder($lancamento))->send()['ok'] ? $ok++ : $falhas++;
+        }
+
+        $msg = "{$ok} cobrança(s) enviada(s).";
+
+        if ($falhas > 0) {
+            $msg .= " {$falhas} não saíram — veja o status de cada uma.";
+        }
+
+        return back()->with($falhas > 0 ? 'warning' : 'success', $msg);
+    }
+
     /**
      * @return array<string, mixed>
      */
     public static function toArray(Transaction $transaction): array
     {
+        $charge = \App\Support\Charges::forId($transaction->id);
+        $asaasLink = \App\Support\AsaasLinks::forTransaction($transaction->id);
+
         return [
             'id' => $transaction->id,
             'type' => $transaction->type,
@@ -543,6 +644,13 @@ class TransactionController extends Controller
                 : null,
             'client' => $transaction->client ? ['id' => $transaction->client->id, 'name' => $transaction->client->display_name] : null,
 
+            'can_charge' => $transaction->type === Transaction::TYPE_RECEIVABLE && $transaction->paid_at === null && $transaction->client_id !== null && $transaction->status() === Transaction::STATUS_OVERDUE,
+            'charged_at' => $charge['charged_at'] ?? null,
+            'charge_error' => $charge['error'] ?? null,
+            'tags' => \App\Support\FinanceTags::tagsOf($transaction->id),
+            'invoice_number' => $asaasLink['invoice_number'] ?? null,
+            'invoice_url' => $asaasLink['invoice_url'] ?? null,
+
             // Como a conta nasceu: avulsa, parcela de uma dívida, ou cobrança
             // de um contrato que se renova.
             'kind' => match (true) {
@@ -565,3 +673,4 @@ class TransactionController extends Controller
         ];
     }
 }
+

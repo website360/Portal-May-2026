@@ -31,6 +31,12 @@ export interface FinanceCategory extends Tagged {
     transactions_count?: number;
 }
 
+export interface FinanceTag {
+    id: number;
+    name: string;
+    color: string;
+}
+
 export interface Transaction {
     id: number;
     type: TransactionType;
@@ -52,6 +58,14 @@ export interface Transaction {
     cost_center: Tagged | null;
     category: Tagged | null;
     client: { id: number; name: string } | null;
+
+    /** Cobrança: pode cobrar (a receber, em aberto) e quando/se já foi cobrada. */
+    can_charge: boolean;
+    charged_at: string | null;
+    charge_error: string | null;
+    tags: FinanceTag[];
+    invoice_number: string | null;
+    invoice_url: string | null;
 
     counterpart: string | null;
     supplier_id: number | null;
@@ -84,6 +98,7 @@ export interface FinanceFilters {
     status: string[];
     cost_center_id: string[];
     finance_category_id: string[];
+    tags: string[];
     month: string;
     sort: string;
     direction: 'asc' | 'desc';

@@ -16,22 +16,20 @@ export function KpiCard({ kpi }: { kpi: Kpi }) {
     const value = kpi.format === 'currency' ? formatCurrency(kpi.value) : formatNumber(kpi.value);
 
     return (
-        <Card className="h-full hover:shadow-md">
-            {/* Valor e rodape em linhas proprias: os quatro cards ficam sempre da mesma altura,
-                mesmo quando o valor e longo (faturamento) ou curto (contagens). */}
-            <CardContent className="flex h-full flex-col gap-3 p-5">
-                <div className="flex items-start justify-between gap-3">
-                    <span className="text-muted-foreground text-sm font-medium">{kpi.label}</span>
-                    <span className="bg-accent text-accent-foreground flex size-9 shrink-0 items-center justify-center rounded-lg">
+        <Card className="h-full transition-shadow hover:shadow-md">
+            {/* Layout do Dashdark X: ícone + rótulo no topo, valor grande com o
+                badge de variação ao lado. Alturas iguais nos quatro cards. */}
+            <CardContent className="flex h-full flex-col gap-4 p-5">
+                <div className="flex items-center gap-2.5">
+                    <span className="bg-primary/10 text-primary flex size-9 shrink-0 items-center justify-center rounded-lg">
                         <Icon className="size-4.5" />
                     </span>
+                    <span className="text-muted-foreground text-sm font-medium">{kpi.label}</span>
                 </div>
 
-                <span className="tabular text-2xl font-bold tracking-tight">{value}</span>
-
-                <div className="mt-auto flex flex-wrap items-center gap-x-2 gap-y-1.5 pt-1">
+                <div className="mt-auto flex flex-wrap items-baseline gap-x-2.5 gap-y-1.5">
+                    <span className="tabular text-2xl font-bold tracking-tight">{value}</span>
                     <DeltaBadge delta={kpi.delta} goodWhen={kpi.goodWhen} />
-                    <span className="text-muted-foreground text-xs">{kpi.delta === null ? 'Sem base de comparação' : 'vs. mês anterior'}</span>
                 </div>
             </CardContent>
         </Card>
@@ -40,7 +38,7 @@ export function KpiCard({ kpi }: { kpi: Kpi }) {
 
 function DeltaBadge({ delta, goodWhen }: { delta: number | null; goodWhen: Kpi['goodWhen'] }) {
     if (delta === null) {
-        return null;
+        return <span className="text-muted-foreground text-xs">sem base</span>;
     }
 
     if (delta === 0) {

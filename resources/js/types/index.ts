@@ -39,8 +39,15 @@ export interface WhatsappStatus {
     stale: boolean;
 }
 
+export interface Brand {
+    name: string;
+    subtitle: string | null;
+    logo_url: string | null;
+}
+
 export interface SharedData {
     name: string;
+    brand: Brand;
     auth: Auth;
     flash: { success: string | null; warning: string | null };
     whatsapp: WhatsappStatus | null;

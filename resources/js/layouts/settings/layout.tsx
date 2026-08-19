@@ -2,21 +2,7 @@ import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import {
-    AtSign,
-    Building2,
-    CreditCard,
-    KeyRound,
-    MessageCircle,
-    MessageSquareText,
-    Palette,
-    ScrollText,
-    Tags,
-    Truck,
-    UserRound,
-    Users,
-    type LucideIcon,
-} from 'lucide-react';
+import { Building2, Plug, Sparkles, CreditCard, KeyRound, Mail, MessageCircle, MessageSquareText, Palette, ScrollText, Tag, Tags, Truck, UserRound, Users, type LucideIcon } from 'lucide-react';
 
 interface SettingsLink {
     title: string;
@@ -43,7 +29,9 @@ const groups: { label: string; items: SettingsLink[]; adminOnly?: boolean }[] = 
         items: [
             { title: 'Usuários', href: '/configuracoes/usuarios', icon: Users },
             { title: 'WhatsApp', href: '/configuracoes/whatsapp', icon: MessageCircle },
-            { title: 'E-mail', href: '/configuracoes/email', icon: AtSign },
+            { title: 'E-mail', href: '/configuracoes/email', icon: Mail },
+            { title: 'Marca', href: '/configuracoes/marca', icon: Sparkles },
+            { title: 'Asaas', href: '/configuracoes/asaas', icon: Plug },
         ],
     },
     {
@@ -59,6 +47,7 @@ const groups: { label: string; items: SettingsLink[]; adminOnly?: boolean }[] = 
             { title: 'Centros de custo', href: '/configuracoes/financeiro/centros-de-custo', icon: Building2 },
             { title: 'Fornecedores', href: '/configuracoes/financeiro/fornecedores', icon: Truck },
             { title: 'Categorias', href: '/configuracoes/financeiro/categorias', icon: Tags },
+            { title: 'Etiquetas', href: '/configuracoes/financeiro/etiquetas', icon: Tag },
             { title: 'Formas de pagamento', href: '/configuracoes/financeiro/formas-de-pagamento', icon: CreditCard },
         ],
     },

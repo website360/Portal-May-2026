@@ -71,6 +71,43 @@ final class Notifier
     }
 
     /**
+     * O que dispatch() enviaria, sem enviar: o texto resolvido e a lista de
+     * destinatários (com o contato de cada um e se dá para alcançá-lo).
+     *
+     * @param  array<string, string>  $variables
+     * @param  array<string, mixed>  $facts
+     * @param  array<string, list<array{name?: string, phone?: string, email?: string}>>  $audience
+     * @return array{text: string, recipients: list<array<string, mixed>>}
+     */
+    public static function preview(string $trigger, array $variables, array $facts, array $audience, string $fallback): array
+    {
+        $escolha = MessageComposer::compose($trigger, $variables, $facts, $fallback);
+        $template = $escolha['template'];
+
+        $canais = $template?->channels ?: [MessageDelivery::WHATSAPP];
+        $grupos = $template?->recipients ?: [MessageDelivery::CLIENT];
+        $pessoas = self::people($grupos, $audience);
+
+        $recipients = [];
+
+        foreach ($canais as $canal) {
+            foreach ($pessoas as $pessoa) {
+                $contato = $canal === MessageDelivery::EMAIL ? 'email' : 'phone';
+
+                $recipients[] = [
+                    'channel' => MessageDelivery::CHANNELS[$canal] ?? $canal,
+                    'kind' => MessageDelivery::RECIPIENTS[$pessoa['kind'] ?? ''] ?? ($pessoa['kind'] ?? ''),
+                    'name' => $pessoa['name'] ?? '',
+                    'contact' => (string) ($pessoa[$contato] ?? ''),
+                    'ok' => filled($pessoa[$contato] ?? null),
+                ];
+            }
+        }
+
+        return ['text' => $escolha['text'], 'recipients' => $recipients];
+    }
+
+    /**
      * As pessoas de verdade por trás dos grupos escolhidos.
      *
      * Sem repetição: o administrador que também é quem executou recebe uma vez,

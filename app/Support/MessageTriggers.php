@@ -21,6 +21,8 @@ final class MessageTriggers
 {
     public const MAINTENANCE_DONE = 'manutencao.concluida';
 
+    public const INVOICE_DUE = 'financeiro.cobranca';
+
     /**
      * @var array<string, array{
      *     label: string,
@@ -42,7 +44,7 @@ final class MessageTriggers
                 ['key' => 'site.url', 'label' => 'Endereço do site', 'example' => 'paoquente.com.br'],
                 ['key' => 'manutencao.data', 'label' => 'Data da manutenção', 'example' => '17/08/2026'],
                 ['key' => 'manutencao.mes', 'label' => 'Mês da manutenção', 'example' => 'agosto'],
-                ['key' => 'manutencao.itens', 'label' => 'Lista do que foi feito', 'example' => "✅ Backup completo\n✅ Atualização do WordPress\n➖ Correção de links quebrados (não era necessário)"],
+                ['key' => 'manutencao.itens', 'label' => 'Lista do que foi feito', 'example' => "✅ Backup completo\n✅ Atualização do WordPress\n☑️ Correção de links quebrados (não era necessário)"],
                 ['key' => 'manutencao.observacoes', 'label' => 'Suas observações', 'example' => 'O plugin de formulário foi substituído por um mais leve.'],
                 ['key' => 'agencia.nome', 'label' => 'Nome da agência', 'example' => 'Agência May'],
             ],
@@ -53,6 +55,32 @@ final class MessageTriggers
                 ['key' => 'cliente', 'label' => 'Nome do cliente', 'type' => 'text'],
                 ['key' => 'site', 'label' => 'Endereço do site', 'type' => 'text'],
                 ['key' => 'mes', 'label' => 'Mês da manutenção', 'type' => 'number'],
+            ],
+        ],
+        self::INVOICE_DUE => [
+            'label' => 'Cobrança de fatura',
+            'module' => 'financeiro',
+            'description' => 'Enviada ao cliente para cobrar uma fatura (conta a receber) em aberto.',
+            'variables' => [
+                ['key' => 'cliente.nome', 'label' => 'Nome do cliente', 'example' => 'Padaria Pão Quente Ltda'],
+                ['key' => 'cliente.contato', 'label' => 'Pessoa de contato', 'example' => 'Maria Souza'],
+                ['key' => 'cliente.primeiro_nome', 'label' => 'Primeiro nome do contato', 'example' => 'Maria'],
+                ['key' => 'fatura.descricao', 'label' => 'Descrição da fatura', 'example' => 'Mensalidade de hospedagem — agosto'],
+                ['key' => 'fatura.valor', 'label' => 'Valor original', 'example' => 'R$ 250,00'],
+                ['key' => 'fatura.valor_atualizado', 'label' => 'Valor atualizado (multa + juros)', 'example' => 'R$ 262,92'],
+                ['key' => 'fatura.vencimento', 'label' => 'Data de vencimento', 'example' => '10/08/2026'],
+                ['key' => 'fatura.dias_atraso', 'label' => 'Dias em atraso', 'example' => '8'],
+                ['key' => 'fatura.multa', 'label' => 'Multa', 'example' => 'R$ 12,50'],
+                ['key' => 'fatura.juros', 'label' => 'Juros', 'example' => 'R$ 0,42'],
+                ['key' => 'fatura.numero', 'label' => 'Número da fatura (Asaas)', 'example' => '00012345'],
+                ['key' => 'fatura.link', 'label' => 'Link de pagamento (Asaas)', 'example' => 'https://www.asaas.com/i/00012345'],
+                ['key' => 'agencia.nome', 'label' => 'Nome da agência', 'example' => 'Agência May'],
+            ],
+            'fields' => [
+                ['key' => 'dias_atraso', 'label' => 'Dias em atraso', 'type' => 'number'],
+                ['key' => 'valor', 'label' => 'Valor', 'type' => 'number'],
+                ['key' => 'vencida', 'label' => 'Está vencida', 'type' => 'boolean'],
+                ['key' => 'cliente', 'label' => 'Nome do cliente', 'type' => 'text'],
             ],
         ],
     ];
@@ -120,3 +148,4 @@ final class MessageTriggers
         )));
     }
 }
+
