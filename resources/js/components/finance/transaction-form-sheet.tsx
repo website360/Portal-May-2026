@@ -131,8 +131,8 @@ export function TransactionFormSheet({
         });
     }
 
-    function remove(scope: Scope = 'one') {
-        transform(() => ({ scope }) as unknown as TransactionFormData);
+    function remove(scope: Scope = 'one', removeSeries = false) {
+        transform(() => ({ scope, remove_recurrence: removeSeries }) as unknown as TransactionFormData);
 
         destroy(route('financeiro.destroy', transaction!.id), {
             preserveScroll: true,
@@ -484,7 +484,7 @@ export function TransactionFormSheet({
                     position={
                         transaction?.installment && transaction?.installments ? `${transaction.installment} de ${transaction.installments}` : null
                     }
-                    onConfirm={(scope) => (scopeAction === 'excluir' ? remove(scope) : save(scope))}
+                    onConfirm={(scope, removeSeries) => (scopeAction === 'excluir' ? remove(scope, removeSeries) : save(scope))}
                 />
             )}
         </Sheet>

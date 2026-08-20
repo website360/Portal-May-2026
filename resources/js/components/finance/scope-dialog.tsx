@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { CalendarRange, Layers, RefreshCw, Square } from 'lucide-react';
@@ -14,7 +15,8 @@ interface ScopeDialogProps {
     action: 'editar' | 'excluir';
     /** Posição na série, quando conhecida: "2 de 12". */
     position?: string | null;
-    onConfirm: (scope: Scope) => void;
+    /** Ao excluir todas as cobranças de uma recorrência, se remove também a recorrência. */
+    onConfirm: (scope: Scope, removeSeries: boolean) => void;
 }
 
 /**
@@ -25,10 +27,12 @@ interface ScopeDialogProps {
  */
 export function ScopeDialog({ open, onOpenChange, kind, action, position, onConfirm }: ScopeDialogProps) {
     const [scope, setScope] = useState<Scope>('one');
+    const [removeSeries, setRemoveSeries] = useState(true);
 
     useEffect(() => {
         if (open) {
             setScope('one');
+            setRemoveSeries(true);
         }
     }, [open]);
 
@@ -89,11 +93,18 @@ export function ScopeDialog({ open, onOpenChange, kind, action, position, onConf
                     ))}
                 </div>
 
+                {action === 'excluir' && isRecurring && scope === 'all' && (
+                    <label className="flex cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2.5 text-sm">
+                        <Checkbox checked={removeSeries} onCheckedChange={(value) => setRemoveSeries(value === true)} />
+                        Remover também a recorrência da lista
+                    </label>
+                )}
+
                 <DialogFooter>
                     <Button variant="secondary" onClick={() => onOpenChange(false)}>
                         Cancelar
                     </Button>
-                    <Button variant={action === 'excluir' ? 'destructive' : 'default'} onClick={() => onConfirm(scope)}>
+                    <Button variant={action === 'excluir' ? 'destructive' : 'default'} onClick={() => onConfirm(scope, removeSeries)}>
                         {action === 'excluir' ? 'Excluir' : 'Salvar'}
                     </Button>
                 </DialogFooter>

@@ -199,6 +199,46 @@ class SeriesScopeTest extends TestCase
         $this->assertSame(2, Transaction::count());
     }
 
+    /** Excluir todas as cobranças pode levar junto a recorrência, quando pedido. */
+    public function test_deleting_all_can_take_the_recurrence_with_it(): void
+    {
+        $this->recorrente();
+        $this->assertSame(1, Recurrence::count());
+
+        $primeira = Transaction::orderBy('due_date')->first();
+
+        $this->delete("/financeiro/{$primeira->id}", ['scope' => Transaction::SCOPE_ALL, 'remove_recurrence' => true]);
+
+        $this->assertSame(0, Transaction::count());
+        $this->assertSame(0, Recurrence::count());
+    }
+
+    /** Sem o pedido, a recorrência fica — só as cobranças somem. */
+    public function test_deleting_all_keeps_the_recurrence_by_default(): void
+    {
+        $this->recorrente();
+        $primeira = Transaction::orderBy('due_date')->first();
+
+        $this->delete("/financeiro/{$primeira->id}", ['scope' => Transaction::SCOPE_ALL]);
+
+        $this->assertSame(0, Transaction::count());
+        $this->assertSame(1, Recurrence::count());
+    }
+
+    private function recorrente(): void
+    {
+        $this->post('/financeiro', [
+            'type' => Transaction::TYPE_RECEIVABLE,
+            'description' => 'Mensalidade',
+            'amount' => '500.00',
+            'due_date' => '2026-08-10',
+            'cost_center_id' => $this->center->id,
+            'repeat' => 'recurring',
+            'interval' => Recurrence::MONTHLY,
+            'occurrences' => 6,
+        ]);
+    }
+
     public function test_an_invented_scope_falls_back_to_this_one_only(): void
     {
         [$primeira] = $this->parcelas();

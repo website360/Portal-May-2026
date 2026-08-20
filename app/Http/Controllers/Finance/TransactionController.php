@@ -456,12 +456,22 @@ class TransactionController extends Controller
     public function destroy(Request $request, Transaction $lancamento): RedirectResponse
     {
         $scope = $this->scope($request);
+
+        // Excluir todas as cobranças pode levar junto a própria recorrência —
+        // senão o "molde" ficava na aba de recorrências sem cobrança nenhuma.
+        $recurrenceId = $scope === Transaction::SCOPE_ALL && $request->boolean('remove_recurrence')
+            ? $lancamento->recurrence_id
+            : null;
+
         $removed = $lancamento->inScope($scope)->delete();
 
-        return back()->with(
-            'success',
-            $removed === 1 ? 'Lançamento excluído.' : "{$removed} lançamentos excluídos."
-        );
+        if ($recurrenceId !== null) {
+            Recurrence::whereKey($recurrenceId)->delete();
+        }
+
+        $message = $removed === 1 ? 'Lançamento excluído.' : "{$removed} lançamentos excluídos.";
+
+        return back()->with('success', $recurrenceId !== null ? $message.' A recorrência foi removida.' : $message);
     }
 
     /**
