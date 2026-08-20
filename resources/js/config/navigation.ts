@@ -47,7 +47,7 @@ export function visibleNavigation(permissions: Record<ModuleKey, PermissionLevel
  * (ex.: /contratos e /contratos/gerar quando a URL e /contratos/gerar), vence o
  * mais especifico, o de href mais longo. Retorna null quando nenhum casa.
  */
-export function activeNavHref(items: NavLink[], currentUrl: string): string | null {
+export function activeNavHref(items: { href: string }[], currentUrl: string): string | null {
     const path = currentUrl.split('?')[0];
 
     let best: string | null = null;
