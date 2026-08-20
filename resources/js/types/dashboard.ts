@@ -15,8 +15,10 @@ export interface Kpi {
 export interface RevenuePoint {
     month: string;
     label: string;
-    received: number;
+    total: number;
     paid: number;
+    pending: number;
+    overdue: number;
 }
 
 export interface RecentProject {

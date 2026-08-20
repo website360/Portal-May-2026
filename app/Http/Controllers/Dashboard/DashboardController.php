@@ -218,37 +218,46 @@ class DashboardController extends Controller
             ->sum(fn (Transaction $t) => (float) ($t->paid_amount ?? $t->amount));
     }
 
+    /**
+     * As contas a receber por mês de vencimento, quebradas nos mesmos status do
+     * Financeiro: total previsto, já recebido, a vencer e atrasado.
+     *
+     * A janela vai dos últimos 5 meses aos próximos 6 (12 no total): só o
+     * passado não mostraria "a vencer", que é o que ainda está por entrar.
+     */
     private function revenueSeries(): array
     {
-        $start = Carbon::now()->startOfMonth()->subMonths(11);
+        $start = Carbon::now()->startOfMonth()->subMonths(5);
+        $end = $start->copy()->addMonths(12);
+        $today = Carbon::today();
 
-        $rows = Transaction::query()
-            ->whereIn('type', [Transaction::TYPE_RECEIVABLE, Transaction::TYPE_PAYABLE])
-            ->whereNotNull('paid_at')
-            ->where('paid_at', '>=', $start)
-            ->get(['type', 'amount', 'paid_amount', 'paid_at']);
-
-        // Recebidas e pagas somam por mês da baixa (paid_at) — o que de fato
-        // entrou e saiu, e não o que estava previsto.
-        $sumByMonth = fn (string $type) => $rows
-            ->where('type', $type)
-            ->groupBy(fn (Transaction $t) => $t->paid_at->format('Y-m'))
-            ->map(fn ($group) => (float) $group->sum(fn (Transaction $t) => (float) ($t->paid_amount ?? $t->amount)));
-
-        $received = $sumByMonth(Transaction::TYPE_RECEIVABLE);
-        $paid = $sumByMonth(Transaction::TYPE_PAYABLE);
+        $byMonth = Transaction::query()
+            ->where('type', Transaction::TYPE_RECEIVABLE)
+            ->whereDate('due_date', '>=', $start->toDateString())
+            ->whereDate('due_date', '<', $end->toDateString())
+            ->get(['amount', 'paid_amount', 'paid_at', 'due_date'])
+            ->groupBy(fn (Transaction $t) => $t->due_date->format('Y-m'));
 
         $series = [];
 
         for ($i = 0; $i < 12; $i++) {
             $month = $start->copy()->addMonths($i);
             $key = $month->format('Y-m');
+            /** @var \Illuminate\Support\Collection<int, Transaction> $group */
+            $group = $byMonth->get($key, collect());
+
+            $paid = $group->filter(fn (Transaction $t) => $t->paid_at !== null);
+            $pending = $group->filter(fn (Transaction $t) => $t->paid_at === null && $t->due_date->startOfDay()->gte($today));
+            $overdue = $group->filter(fn (Transaction $t) => $t->paid_at === null && $t->due_date->startOfDay()->lt($today));
 
             $series[] = [
                 'month' => $key,
                 'label' => ucfirst(str_replace('.', '', $month->translatedFormat('M'))),
-                'received' => round((float) $received->get($key, 0.0), 2),
-                'paid' => round((float) $paid->get($key, 0.0), 2),
+                // Total pelo valor previsto; recebido pelo valor de fato baixado.
+                'total' => round((float) $group->sum(fn (Transaction $t) => (float) $t->amount), 2),
+                'paid' => round((float) $paid->sum(fn (Transaction $t) => (float) ($t->paid_amount ?? $t->amount)), 2),
+                'pending' => round((float) $pending->sum(fn (Transaction $t) => (float) $t->amount), 2),
+                'overdue' => round((float) $overdue->sum(fn (Transaction $t) => (float) $t->amount), 2),
             ];
         }
 
