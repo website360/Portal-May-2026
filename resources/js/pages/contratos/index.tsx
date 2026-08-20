@@ -44,6 +44,21 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Contratos', href: '/contratos' },
 ];
 
+/**
+ * Farol do contrato na bolinha do cliente: verde no primeiro ano, âmbar do
+ * segundo em diante (rumo ao reajuste bianual), vermelho quando não vigora
+ * mais — cancelado, encerrado ou ainda em rascunho.
+ */
+function contractTone(contract: Contract): 'success' | 'warning' | 'destructive' {
+    if (contract.cancelled || contract.status === 'ended' || contract.status === 'draft') {
+        return 'destructive';
+    }
+
+    const months = (Date.now() - new Date(`${contract.starts_at}T00:00:00`).getTime()) / (1000 * 60 * 60 * 24 * 30.44);
+
+    return months < 12 ? 'success' : 'warning';
+}
+
 interface ContratosPageProps {
     contracts: Paginated<Contract>;
     filters: ContractFilters;
@@ -242,7 +257,7 @@ export default function Contratos({ contracts, filters, stats, clients, services
                                             <SortableHeader column="number" label="Número" {...sortProps} />
                                             <SortableHeader column="ends_at" label="Vigência" {...sortProps} />
                                             <SortableHeader column="value" label="Valor" align="right" {...sortProps} />
-                                            <th className="px-4 py-2.5">Situação</th>
+                                            <th className="px-4 py-2.5 text-right">Situação</th>
                                             <th className="w-24 py-2.5 pr-6 pl-4" />
                                         </tr>
                                     </thead>
@@ -263,6 +278,7 @@ export default function Contratos({ contracts, filters, stats, clients, services
                                                         <ClientAvatar
                                                             name={contract.client.name}
                                                             photoUrl={contract.client.photo_url}
+                                                            tone={contractTone(contract)}
                                                             className="size-7"
                                                         />
                                                         <span className="truncate">{contract.client.name}</span>
@@ -304,7 +320,7 @@ export default function Contratos({ contracts, filters, stats, clients, services
                                                     )}
                                                 </td>
 
-                                                <td className="px-4 py-3">
+                                                <td className="px-4 py-3 text-right">
                                                     <ContractStatusBadge status={contract.status} daysLeft={contract.days_left} />
                                                 </td>
 

@@ -85,18 +85,29 @@ function toneFor(name: string): string {
     return TONES[hash % TONES.length];
 }
 
+/** Farol opcional: um anel (e o fundo das iniciais) verde, âmbar ou vermelho. */
+const LIGHTS = {
+    success: { ring: 'border-2 border-success', fill: 'bg-success/15 text-success' },
+    warning: { ring: 'border-2 border-warning', fill: 'bg-warning/15 text-warning' },
+    destructive: { ring: 'border-2 border-destructive', fill: 'bg-destructive/15 text-destructive' },
+};
+
 interface ClientAvatarProps {
     name: string;
     photoUrl?: string | null;
     className?: string;
+    /** Quando presente, sobrepõe o tom por hash — usado como farol de estado. */
+    tone?: keyof typeof LIGHTS;
 }
 
-export function ClientAvatar({ name, photoUrl, className }: ClientAvatarProps) {
+export function ClientAvatar({ name, photoUrl, className, tone }: ClientAvatarProps) {
+    const light = tone ? LIGHTS[tone] : null;
+
     return (
         // O tamanho das iniciais vem da raiz, entao `size-16 text-base` escala tudo junto.
-        <Avatar className={cn('size-9 border text-xs', className)}>
+        <Avatar className={cn('size-9 text-xs', light ? light.ring : 'border', className)}>
             {photoUrl && <AvatarImage src={photoUrl} alt={name} className="object-cover" />}
-            <AvatarFallback className={cn('font-semibold', toneFor(name))}>{clientInitials(name)}</AvatarFallback>
+            <AvatarFallback className={cn('font-semibold', light ? light.fill : toneFor(name))}>{clientInitials(name)}</AvatarFallback>
         </Avatar>
     );
 }

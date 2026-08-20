@@ -139,8 +139,8 @@
     --destructive-foreground: hsl(0 0% 100%);
     --success: hsl(142 71% 45%);
     --success-foreground: hsl(0 0% 100%);
-    --warning: hsl(38 92% 50%);
-    --warning-foreground: hsl(0 0% 100%);
+    --warning: hsl(46 100% 49%); /* #FCC100 — o amarelo do sistema */
+    --warning-foreground: hsl(222 47% 11%);
     --border: hsl(220 13% 91%);
     --input: hsl(220 13% 91%);
     --ring: hsl(221 83% 53%);
@@ -193,7 +193,7 @@
     --destructive-foreground: #ffffff;
     --success: #14ca74;
     --success-foreground: #ffffff;
-    --warning: #fdb52a;
+    --warning: #fcc100; /* #FCC100 — o amarelo do sistema */
     --warning-foreground: #0b0b0e;
     --border: #29292e;
     --input: #34343a;
