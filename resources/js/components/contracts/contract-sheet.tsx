@@ -270,14 +270,13 @@ export function ContractSheet({ open, contract, onOpenChange, clients }: Contrac
                                         .reverse()
                                         .map((renewal, index) => (
                                             <div key={index} className="text-muted-foreground rounded-lg border px-3 py-2 text-xs leading-relaxed">
-                                                <span className="text-foreground font-medium">{formatDate(renewal.renewed_at)}</span> — vigência{' '}
-                                                {renewal.from_ends_at ? formatDate(renewal.from_ends_at) : '—'} → {formatDate(renewal.to_ends_at)}
-                                                {renewal.from_value !== renewal.to_value && (
-                                                    <>
-                                                        {' · '}
-                                                        {formatMoney(renewal.from_value)} → {formatMoney(renewal.to_value)}
-                                                    </>
-                                                )}
+                                                <div className="text-foreground font-medium">Renovado em {formatDate(renewal.renewed_at)}</div>
+                                                <div>
+                                                    Vigência: {renewal.from_ends_at ? formatDate(renewal.from_ends_at) : '—'} → {formatDate(renewal.to_ends_at)}
+                                                </div>
+                                                <div>
+                                                    Valor: {formatMoney(renewal.from_value)} → {formatMoney(renewal.to_value)}
+                                                </div>
                                             </div>
                                         ))}
                                 </div>
