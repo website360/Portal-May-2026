@@ -2,6 +2,13 @@ import type { ClientOption } from '@/types/domains';
 
 export type ContractStatus = 'draft' | 'active' | 'expiring' | 'ended' | 'cancelled';
 
+export type BillingPeriod = 'monthly' | 'annual';
+
+export const billingPeriodLabels: Record<BillingPeriod, string> = {
+    monthly: 'Mensal',
+    annual: 'Anual',
+};
+
 /** Um marcador que o modelo pede e o sistema não sabe preencher sozinho. */
 export interface TemplateField {
     key: string;
@@ -44,6 +51,13 @@ export interface Contract {
     /** Negativo quando a vigência já acabou; null em prazo indeterminado. */
     days_left: number | null;
     status: ContractStatus;
+    billing_period: BillingPeriod | null;
+    price_review_at: string | null;
+    price_review_label: string | null;
+    price_review_years: number | null;
+    /** Dias até o próximo reajuste; negativo quando já passou; null sem reajuste marcado. */
+    review_days: number | null;
+    review_due: boolean;
     signed_at: string | null;
     signed_label: string | null;
     cancelled: boolean;
@@ -60,6 +74,7 @@ export interface ContractStats {
     active: number;
     expiring: number;
     draft: number;
+    review: number;
 }
 
 export interface ContractFilters {

@@ -7,11 +7,20 @@ import type { Contract } from '@/types/contracts';
 import { useForm } from '@inertiajs/react';
 import { useEffect } from 'react';
 
-/** Sugere a data de fim um ano à frente da atual — o ajuste fino fica com quem renova. */
-function oneYearLater(date: string | null): string {
+/**
+ * Sugere a próxima data de fim avançando pelo período contratado — mensal soma
+ * um mês, o resto soma um ano. É só sugestão; o ajuste fino fica com quem renova.
+ */
+function nextEnd(date: string | null, period: Contract['billing_period']): string {
     if (!date) return '';
 
     const [year, month, day] = date.split('-');
+
+    if (period === 'monthly') {
+        const m = Number(month);
+
+        return m === 12 ? `${Number(year) + 1}-01-${day}` : `${year}-${String(m + 1).padStart(2, '0')}-${day}`;
+    }
 
     return `${Number(year) + 1}-${month}-${day}`;
 }
@@ -23,7 +32,7 @@ export function ContractRenewDialog({ contract, onClose }: { contract: Contract 
     useEffect(() => {
         if (contract) {
             setData({
-                ends_at: oneYearLater(contract.ends_at),
+                ends_at: nextEnd(contract.ends_at, contract.billing_period),
                 value: contract.value === null ? '' : String(contract.value),
             });
         }

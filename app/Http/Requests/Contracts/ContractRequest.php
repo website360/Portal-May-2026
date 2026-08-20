@@ -22,6 +22,10 @@ class ContractRequest extends FormRequest
             'signed_at' => ['nullable', 'date'],
             'notes' => ['nullable', 'string', 'max:2000'],
 
+            'billing_period' => ['nullable', 'in:monthly,annual'],
+            'price_review_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
+            'price_review_years' => ['nullable', 'integer', 'min:1', 'max:20'],
+
             // Os marcadores livres do modelo, preenchidos na tela.
             'variables' => ['array'],
             'variables.*' => ['nullable', 'string', 'max:1000'],
@@ -45,6 +49,9 @@ class ContractRequest extends FormRequest
             'starts_at' => 'início da vigência',
             'ends_at' => 'fim da vigência',
             'signed_at' => 'data da assinatura',
+            'billing_period' => 'período contratado',
+            'price_review_at' => 'próximo reajuste',
+            'price_review_years' => 'período de reajuste',
             'pdf' => 'arquivo',
         ];
     }

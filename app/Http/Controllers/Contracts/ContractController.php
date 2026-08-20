@@ -389,6 +389,10 @@ class ContractController extends Controller
             'active' => Contract::withStatuses([Contract::STATUS_ACTIVE, Contract::STATUS_EXPIRING])->count(),
             'expiring' => Contract::withStatuses([Contract::STATUS_EXPIRING])->count(),
             'draft' => Contract::withStatuses([Contract::STATUS_DRAFT])->count(),
+            'review' => Contract::whereNotNull('price_review_at')
+                ->whereNull('cancelled_at')
+                ->whereDate('price_review_at', '<=', today()->addDays(Contract::REVIEW_WINDOW_DAYS))
+                ->count(),
         ];
     }
 
@@ -438,6 +442,12 @@ class ContractController extends Controller
             'ends_label' => $contract->ends_at?->format('d/m/Y'),
             'days_left' => $contract->daysLeft(),
             'status' => $contract->status(),
+            'billing_period' => $contract->billing_period,
+            'price_review_at' => $contract->price_review_at?->format('Y-m-d'),
+            'price_review_label' => $contract->price_review_at?->format('d/m/Y'),
+            'price_review_years' => $contract->price_review_years,
+            'review_days' => $contract->daysToReview(),
+            'review_due' => $contract->reviewDue(),
             'signed_at' => $contract->signed_at?->format('Y-m-d'),
             'signed_label' => $contract->signed_at?->format('d/m/Y'),
             'cancelled' => $contract->cancelled_at !== null,

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use App\Models\MessageTemplate;
 use App\Support\ContractExpiryAlert;
+use App\Support\ContractPriceReviewAlert;
 use App\Support\MaintenanceReport;
 use App\Support\MessageComposer;
 use App\Support\MessageDelivery;
@@ -64,6 +65,7 @@ class MessageTemplateController extends Controller
             'starters' => [
                 MessageTriggers::MAINTENANCE_DONE => MaintenanceReport::defaultBody(),
                 MessageTriggers::CONTRACT_EXPIRING => ContractExpiryAlert::defaultBody(),
+                MessageTriggers::CONTRACT_PRICE_REVIEW => ContractPriceReviewAlert::defaultBody(),
             ],
         ]);
     }

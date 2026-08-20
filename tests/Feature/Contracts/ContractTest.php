@@ -950,4 +950,46 @@ class ContractTest extends TestCase
             ->expectsOutputToContain('Nenhum contrato em marco')
             ->assertSuccessful();
     }
+
+    // ── Período contratado e reajuste de preço ───────────────────────────────
+
+    public function test_a_contract_stores_period_and_price_review(): void
+    {
+        $cliente = Client::factory()->create();
+
+        $this->post(self::URL.'/registrar', [
+            'client_id' => $cliente->id,
+            'title' => 'Hospedagem',
+            'service' => 'Hospedagem',
+            'starts_at' => '2026-01-01',
+            'billing_period' => 'monthly',
+            'price_review_at' => '2028-01-01',
+            'price_review_years' => 2,
+        ])->assertRedirect()->assertSessionHasNoErrors();
+
+        $contrato = Contract::firstOrFail();
+
+        $this->assertSame('monthly', $contrato->billing_period);
+        $this->assertSame('2028-01-01', $contrato->price_review_at->toDateString());
+        $this->assertSame(2, $contrato->price_review_years);
+    }
+
+    /** O reajuste entra em "a reajustar" só dentro da janela. */
+    public function test_review_is_due_only_within_the_window(): void
+    {
+        $this->assertTrue(Contract::factory()->create(['price_review_at' => Carbon::today()->addDays(10)])->reviewDue());
+        $this->assertFalse(Contract::factory()->create(['price_review_at' => Carbon::today()->addDays(90)])->reviewDue());
+        $this->assertFalse(Contract::factory()->create(['price_review_at' => null])->reviewDue());
+    }
+
+    /** O comando avisa também os reajustes nos marcos. */
+    public function test_the_command_alerts_a_price_review_at_a_milestone(): void
+    {
+        $contrato = Contract::factory()->create(['price_review_at' => Carbon::today()->addDays(15)]);
+
+        $this->artisan('contratos:avisar-vencimento --dry-run')
+            ->expectsOutputToContain($contrato->number)
+            ->expectsOutputToContain('Reajuste')
+            ->assertSuccessful();
+    }
 }

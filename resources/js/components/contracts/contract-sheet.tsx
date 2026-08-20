@@ -3,6 +3,7 @@ import { Combobox } from '@/components/ui/combobox';
 import { CurrencyInput } from '@/components/ui/currency-input';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
 import { numberToCurrency } from '@/lib/masks';
@@ -27,11 +28,23 @@ interface FormData {
     value: string;
     starts_at: string;
     ends_at: string;
+    billing_period: string;
+    price_review_at: string;
+    price_review_years: string;
     signed_at: string;
     notes: string;
     pdf: File | null;
 
     [key: string]: string | File | null;
+}
+
+/** Soma anos a uma data "YYYY-MM-DD" preservando mês e dia. */
+function plusYears(date: string, years: number): string {
+    if (!date) return '';
+
+    const [y, m, d] = date.split('-');
+
+    return `${Number(y) + years}-${m}-${d}`;
 }
 
 const EMPTY: FormData = {
@@ -41,6 +54,9 @@ const EMPTY: FormData = {
     value: '',
     starts_at: '',
     ends_at: '',
+    billing_period: '',
+    price_review_at: '',
+    price_review_years: '2',
     signed_at: '',
     notes: '',
     pdf: null,
@@ -68,6 +84,9 @@ export function ContractSheet({ open, contract, onOpenChange, clients }: Contrac
                       value: contract.value === null ? '' : numberToCurrency(contract.value),
                       starts_at: contract.starts_at,
                       ends_at: contract.ends_at ?? '',
+                      billing_period: contract.billing_period ?? '',
+                      price_review_at: contract.price_review_at ?? '',
+                      price_review_years: String(contract.price_review_years ?? 2),
                       signed_at: contract.signed_at ?? '',
                       notes: contract.notes ?? '',
                       pdf: null,
@@ -80,6 +99,15 @@ export function ContractSheet({ open, contract, onOpenChange, clients }: Contrac
     function change<K extends keyof FormData>(field: K, value: FormData[K]) {
         clearErrors(field as string);
         setData(field as string, value);
+    }
+
+    // Ao definir o início, sugere o próximo reajuste (+N anos) enquanto não há um.
+    function changeStart(value: string) {
+        change('starts_at', value);
+
+        if (value && !data.price_review_at) {
+            change('price_review_at', plusYears(value, Number(data.price_review_years) || 2));
+        }
     }
 
     function submit(event: React.FormEvent) {
@@ -151,13 +179,48 @@ export function ContractSheet({ open, contract, onOpenChange, clients }: Contrac
 
                         <div className="grid gap-5 sm:grid-cols-2">
                             <Field label="Início" required error={errors.starts_at}>
-                                <Input id="starts_at" type="date" value={data.starts_at} onChange={(e) => change('starts_at', e.target.value)} />
+                                <Input id="starts_at" type="date" value={data.starts_at} onChange={(e) => changeStart(e.target.value)} />
                             </Field>
 
                             <Field label="Fim" error={errors.ends_at} hint="Em branco: indeterminado.">
                                 <Input id="ends_at" type="date" value={data.ends_at} onChange={(e) => change('ends_at', e.target.value)} />
                             </Field>
                         </div>
+
+                        <div className="grid gap-5 sm:grid-cols-2">
+                            <Field label="Período contratado" error={errors.billing_period} hint="Guia a renovação.">
+                                <Select value={data.billing_period || undefined} onValueChange={(v) => change('billing_period', v)}>
+                                    <SelectTrigger id="billing_period">
+                                        <SelectValue placeholder="Não definido" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="monthly">Mensal</SelectItem>
+                                        <SelectItem value="annual">Anual</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </Field>
+
+                            <Field label="Próximo reajuste" error={errors.price_review_at} hint="Sugerido em início + 2 anos.">
+                                <Input
+                                    id="price_review_at"
+                                    type="date"
+                                    value={data.price_review_at}
+                                    onChange={(e) => change('price_review_at', e.target.value)}
+                                />
+                            </Field>
+                        </div>
+
+                        <Field label="Reajustar a cada (anos)" error={errors.price_review_years} hint="Padrão 2 — bianual.">
+                            <Input
+                                id="price_review_years"
+                                type="number"
+                                min="1"
+                                max="20"
+                                className="w-24"
+                                value={data.price_review_years}
+                                onChange={(e) => change('price_review_years', e.target.value)}
+                            />
+                        </Field>
 
                         {/* Só na edição: um cadastro direto já vale pela data, sem assinatura. */}
                         {contract && (

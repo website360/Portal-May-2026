@@ -15,7 +15,7 @@ import AppLayout from '@/layouts/app-layout';
 import { formatCurrency, formatNumber } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { type BreadcrumbItem, type Paginated } from '@/types';
-import { CONTRACT_FILTER_KEYS, statusOptions, type ClientOption, type Contract, type ContractFilters, type ContractStats } from '@/types/contracts';
+import { billingPeriodLabels, CONTRACT_FILTER_KEYS, statusOptions, type ClientOption, type Contract, type ContractFilters, type ContractStats } from '@/types/contracts';
 import { Head, Link, router } from '@inertiajs/react';
 import {
     AlertTriangle,
@@ -34,6 +34,7 @@ import {
     Plus,
     Search,
     Trash2,
+    TrendingUp,
     X,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -121,7 +122,7 @@ export default function Contratos({ contracts, filters, stats, clients, services
                     </Button>
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
                     <Stat icon={FileText} label="Contratos" value={formatNumber(stats.total)} hint="Na base inteira" />
                     <Stat
                         icon={CircleCheck}
@@ -139,6 +140,13 @@ export default function Contratos({ contracts, filters, stats, clients, services
                         tone={stats.expiring > 0 ? 'warning' : undefined}
                         active={filters.statuses.includes('expiring')}
                         onClick={() => apply({ statuses: filters.statuses.includes('expiring') ? [] : ['expiring'] })}
+                    />
+                    <Stat
+                        icon={TrendingUp}
+                        label="A reajustar"
+                        value={formatNumber(stats.review)}
+                        hint="Reajuste em até 30 dias"
+                        tone={stats.review > 0 ? 'warning' : undefined}
                     />
                     <Stat
                         icon={FileClock}
@@ -286,7 +294,14 @@ export default function Contratos({ contracts, filters, stats, clients, services
                                                     <div className="tabular">{contract.starts_label}</div>
                                                     <div className="text-muted-foreground text-xs">
                                                         {contract.ends_label ? `até ${contract.ends_label}` : 'prazo indeterminado'}
+                                                        {contract.billing_period && ` · ${billingPeriodLabels[contract.billing_period]}`}
                                                     </div>
+                                                    {contract.review_due && (
+                                                        <div className="text-warning mt-1 flex items-center gap-1 text-xs font-medium">
+                                                            <TrendingUp className="size-3" />
+                                                            Reajustar{contract.price_review_label ? ` — ${contract.price_review_label}` : ''}
+                                                        </div>
+                                                    )}
                                                 </td>
 
                                                 <td className="px-4 py-3">

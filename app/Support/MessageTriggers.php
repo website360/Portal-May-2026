@@ -25,6 +25,8 @@ final class MessageTriggers
 
     public const CONTRACT_EXPIRING = 'contrato.vencimento';
 
+    public const CONTRACT_PRICE_REVIEW = 'contrato.reajuste';
+
     /**
      * @var array<string, array{
      *     label: string,
@@ -101,6 +103,26 @@ final class MessageTriggers
             'fields' => [
                 ['key' => 'dias', 'label' => 'Dias até o fim', 'type' => 'number'],
                 ['key' => 'valor', 'label' => 'Valor', 'type' => 'number'],
+                ['key' => 'cliente', 'label' => 'Nome do cliente', 'type' => 'text'],
+                ['key' => 'servico', 'label' => 'Serviço', 'type' => 'text'],
+            ],
+        ],
+        self::CONTRACT_PRICE_REVIEW => [
+            'label' => 'Reajuste de preço',
+            'module' => 'contratos',
+            'description' => 'Aviso interno (aos administradores) quando chega a hora de reajustar o preço de um contrato — 30, 15, 7 e 1 dia antes. Configure os destinatários como "Os administradores".',
+            'variables' => [
+                ['key' => 'cliente.nome', 'label' => 'Nome do cliente', 'example' => 'Padaria Pão Quente Ltda'],
+                ['key' => 'contrato.numero', 'label' => 'Número do contrato', 'example' => '0007'],
+                ['key' => 'contrato.servico', 'label' => 'Serviço', 'example' => 'Hospedagem anual'],
+                ['key' => 'contrato.valor', 'label' => 'Valor atual', 'example' => 'R$ 1.200,00'],
+                ['key' => 'contrato.reajuste', 'label' => 'Data do reajuste', 'example' => '01/01/2028'],
+                ['key' => 'contrato.dias', 'label' => 'Dias até o reajuste', 'example' => '30'],
+                ['key' => 'agencia.nome', 'label' => 'Nome da agência', 'example' => 'Agência May'],
+            ],
+            'fields' => [
+                ['key' => 'dias', 'label' => 'Dias até o reajuste', 'type' => 'number'],
+                ['key' => 'valor', 'label' => 'Valor atual', 'type' => 'number'],
                 ['key' => 'cliente', 'label' => 'Nome do cliente', 'type' => 'text'],
                 ['key' => 'servico', 'label' => 'Serviço', 'type' => 'text'],
             ],

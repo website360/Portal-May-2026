@@ -21,6 +21,19 @@ class Contract extends Model
     /** Dentro dessa janela o contrato entra na lista de renovação. */
     public const EXPIRING_WINDOW_DAYS = 30;
 
+    /** Dentro dessa janela o reajuste de preço entra na lista de "a reajustar". */
+    public const REVIEW_WINDOW_DAYS = 30;
+
+    /** Período contratado: o ciclo mensal ou anual. */
+    public const BILLING_MONTHLY = 'monthly';
+
+    public const BILLING_ANNUAL = 'annual';
+
+    public const BILLING_PERIODS = [self::BILLING_MONTHLY, self::BILLING_ANNUAL];
+
+    /** Meses que cada período contratado avança — guia a renovação. */
+    public const BILLING_MONTHS = [self::BILLING_MONTHLY => 1, self::BILLING_ANNUAL => 12];
+
     public const STATUS_DRAFT = 'draft';
 
     public const STATUS_ACTIVE = 'active';
@@ -36,6 +49,7 @@ class Contract extends Model
         'value', 'starts_at', 'ends_at', 'body', 'variables', 'notes', 'signed_at',
         // Sem isto o cancelamento era gravado em silêncio e nada acontecia.
         'cancelled_at', 'pdf_path', 'active_without_signature',
+        'billing_period', 'price_review_at', 'price_review_years',
     ];
 
     protected function casts(): array
@@ -48,6 +62,8 @@ class Contract extends Model
             'cancelled_at' => 'datetime',
             'variables' => 'array',
             'active_without_signature' => 'boolean',
+            'price_review_at' => 'date',
+            'price_review_years' => 'integer',
         ];
     }
 
@@ -92,6 +108,27 @@ class Contract extends Model
         }
 
         return (int) Carbon::today()->diffInDays($this->ends_at->startOfDay(), false);
+    }
+
+    /** Dias até o próximo reajuste de preço. Null quando não há reajuste marcado. */
+    public function daysToReview(): ?int
+    {
+        if ($this->price_review_at === null) {
+            return null;
+        }
+
+        return (int) Carbon::today()->diffInDays($this->price_review_at->startOfDay(), false);
+    }
+
+    /**
+     * O reajuste está na hora: dentro da janela de aviso ou já vencido — mas só
+     * para contratos que ainda vigoram (não cancelados).
+     */
+    public function reviewDue(): bool
+    {
+        $days = $this->daysToReview();
+
+        return $days !== null && $days <= self::REVIEW_WINDOW_DAYS && $this->cancelled_at === null;
     }
 
     public function status(): string
