@@ -49,7 +49,7 @@ class Contract extends Model
         'value', 'starts_at', 'ends_at', 'body', 'variables', 'notes', 'signed_at',
         // Sem isto o cancelamento era gravado em silêncio e nada acontecia.
         'cancelled_at', 'pdf_path', 'active_without_signature',
-        'billing_period', 'price_review_at', 'price_review_years',
+        'billing_period', 'price_review_at', 'price_review_years', 'renewals',
     ];
 
     protected function casts(): array
@@ -64,6 +64,7 @@ class Contract extends Model
             'active_without_signature' => 'boolean',
             'price_review_at' => 'date',
             'price_review_years' => 'integer',
+            'renewals' => 'array',
         ];
     }
 

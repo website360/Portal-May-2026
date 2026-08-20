@@ -48,6 +48,10 @@ const EMPTY: FormData = {
     pdf: null,
 };
 
+const formatDate = (date: string) => new Date(`${date}T00:00:00`).toLocaleDateString('pt-BR');
+
+const formatMoney = (value: number | null) => (value === null ? '—' : value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }));
+
 export function ContractSheet({ open, contract, onOpenChange, clients }: ContractSheetProps) {
     const [showText, setShowText] = useState(false);
     const fileInput = useRef<HTMLInputElement>(null);
@@ -256,6 +260,29 @@ export function ContractSheet({ open, contract, onOpenChange, clients }: Contrac
                         <Field label="Observações internas" error={errors.notes}>
                             <Textarea id="notes" rows={2} value={data.notes} onChange={(e) => change('notes', e.target.value)} />
                         </Field>
+
+                        {contract && contract.renewals.length > 0 && (
+                            <div className="grid gap-2">
+                                <Label>Histórico de renovações</Label>
+                                <div className="grid gap-1.5">
+                                    {contract.renewals
+                                        .slice()
+                                        .reverse()
+                                        .map((renewal, index) => (
+                                            <div key={index} className="text-muted-foreground rounded-lg border px-3 py-2 text-xs leading-relaxed">
+                                                <span className="text-foreground font-medium">{formatDate(renewal.renewed_at)}</span> — vigência{' '}
+                                                {renewal.from_ends_at ? formatDate(renewal.from_ends_at) : '—'} → {formatDate(renewal.to_ends_at)}
+                                                {renewal.from_value !== renewal.to_value && (
+                                                    <>
+                                                        {' · '}
+                                                        {formatMoney(renewal.from_value)} → {formatMoney(renewal.to_value)}
+                                                    </>
+                                                )}
+                                            </div>
+                                        ))}
+                                </div>
+                            </div>
+                        )}
 
                         {contract?.has_body && (
                             <div className="grid gap-2">

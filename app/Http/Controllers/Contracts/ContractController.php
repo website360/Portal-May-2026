@@ -205,6 +205,20 @@ class ContractController extends Controller
             'value' => 'valor',
         ]);
 
+        $novoValor = ($data['value'] ?? null) !== null ? (float) $data['value'] : ($contrato->value === null ? null : (float) $contrato->value);
+
+        // Renovar estende o mesmo contrato, mas grava o antes/depois — é assim que
+        // se enxerga o histórico de períodos e valores depois.
+        $renewals = $contrato->renewals ?? [];
+        $renewals[] = [
+            'renewed_at' => today()->toDateString(),
+            'from_ends_at' => $contrato->ends_at?->toDateString(),
+            'to_ends_at' => $data['ends_at'],
+            'from_value' => $contrato->value === null ? null : (float) $contrato->value,
+            'to_value' => $novoValor,
+        ];
+        $contrato->renewals = $renewals;
+
         $contrato->ends_at = $data['ends_at'];
 
         if (($data['value'] ?? null) !== null) {
@@ -448,6 +462,7 @@ class ContractController extends Controller
             'price_review_years' => $contract->price_review_years,
             'review_days' => $contract->daysToReview(),
             'review_due' => $contract->reviewDue(),
+            'renewals' => $contract->renewals ?? [],
             'signed_at' => $contract->signed_at?->format('Y-m-d'),
             'signed_label' => $contract->signed_at?->format('d/m/Y'),
             'cancelled' => $contract->cancelled_at !== null,

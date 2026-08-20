@@ -464,7 +464,7 @@ function Stat({
                             'flex size-9 shrink-0 items-center justify-center rounded-lg',
                             tone === 'warning' && 'bg-warning/10 text-warning',
                             tone === 'destructive' && 'bg-destructive/10 text-destructive',
-                            !tone && 'bg-accent text-accent-foreground',
+                            !tone && 'bg-muted text-muted-foreground',
                         )}
                     >
                         <Icon className="size-4.5" />

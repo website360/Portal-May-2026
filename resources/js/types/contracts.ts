@@ -4,6 +4,15 @@ export type ContractStatus = 'draft' | 'active' | 'expiring' | 'ended' | 'cancel
 
 export type BillingPeriod = 'monthly' | 'annual';
 
+/** Uma renovação registrada: o antes/depois de vigência e valor. */
+export interface ContractRenewal {
+    renewed_at: string;
+    from_ends_at: string | null;
+    to_ends_at: string;
+    from_value: number | null;
+    to_value: number | null;
+}
+
 export const billingPeriodLabels: Record<BillingPeriod, string> = {
     monthly: 'Mensal',
     annual: 'Anual',
@@ -58,6 +67,7 @@ export interface Contract {
     /** Dias até o próximo reajuste; negativo quando já passou; null sem reajuste marcado. */
     review_days: number | null;
     review_due: boolean;
+    renewals: ContractRenewal[];
     signed_at: string | null;
     signed_label: string | null;
     cancelled: boolean;
