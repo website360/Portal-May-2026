@@ -9,7 +9,7 @@ import { useCallback, useEffect, useState } from 'react';
   A aplicação acontece antes do render (initializePersonalization) para não piscar.
 */
 
-export type Accent = 'blue' | 'violet' | 'emerald' | 'rose' | 'amber' | 'sky';
+export type Accent = 'blue' | 'violet' | 'emerald' | 'rose' | 'amber' | 'yellow' | 'sky';
 export type UiScale = 'compact' | 'default' | 'comfortable' | 'large';
 export type UiRadius = 'square' | 'default' | 'round';
 
@@ -19,6 +19,7 @@ export const ACCENTS: { value: Accent; label: string; swatch: string }[] = [
     { value: 'emerald', label: 'Esmeralda', swatch: 'hsl(160 84% 39%)' },
     { value: 'rose', label: 'Rosé', swatch: 'hsl(347 77% 50%)' },
     { value: 'amber', label: 'Âmbar', swatch: 'hsl(32 95% 44%)' },
+    { value: 'yellow', label: 'Amarelo', swatch: 'hsl(46 100% 49%)' },
     { value: 'sky', label: 'Ciano', swatch: 'hsl(199 89% 48%)' },
 ];
 

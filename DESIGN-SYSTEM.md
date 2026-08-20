@@ -135,7 +135,11 @@ cada accent redefine `--primary`, `--ring`, `--accent`, os tokens de sidebar e
 | `emerald` | Esmeralda | `160 84% 39%` | `158 74% 44%` |
 | `rose` | Rosé | `347 77% 50%` | `346 84% 60%` |
 | `amber` | Âmbar | `32 95% 44%` | `35 92% 55%` |
+| `yellow` | Amarelo (#FCC100) | `46 100% 49%` | `46 100% 55%` |
 | `sky` | Ciano | `199 89% 48%` | `199 89% 55%` |
+
+> `yellow` é uma cor clara: o `primary-foreground` dele é escuro (`222 47% 11%`)
+> nos dois temas, porque texto branco sobre amarelo não se lê.
 
 Padrão de implementação (seletores separados por tema):
 
@@ -158,7 +162,7 @@ Três ajustes por usuário, guardados no `localStorage` e aplicados na raiz `<ht
 
 | Eixo | Como aplica | Opções |
 |---|---|---|
-| **Accent** (cor) | `data-accent` no `<html>` | Azul*, Violeta, Esmeralda, Rosé, Âmbar, Ciano |
+| **Accent** (cor) | `data-accent` no `<html>` | Azul*, Violeta, Esmeralda, Rosé, Âmbar, Amarelo, Ciano |
 | **Escala** (tamanho) | `font-size` da raiz (UI é toda `rem`) | Compacto `16px`, Padrão* `17px`, Confortável `18px`, Grande `19px` |
 | **Raio** (cantos) | `--radius` | Reto `0.35rem`, Padrão* `0.65rem`, Arredondado `0.95rem` |
 

@@ -406,3 +406,22 @@
     --sidebar-accent: hsl(199 45% 15%); --sidebar-accent-foreground: hsl(199 90% 78%); --chart-1: hsl(199 89% 55%);
     --primary-10: hsl(199 89% 55% / 0.1); --primary-12: hsl(199 89% 55% / 0.12); --primary-35: hsl(199 89% 55% / 0.35);
 }
+
+/*
+  Amarelo #FCC100 = hsl(46 100% 49%). Sendo uma cor clara, o texto sobre ela
+  (primary-foreground) é escuro nos dois temas — branco sobre amarelo não se lê.
+*/
+:root:not(.dark)[data-accent='yellow'] {
+    --primary: hsl(46 100% 49%); --primary-foreground: hsl(222 47% 11%); --ring: hsl(46 100% 49%);
+    --accent: hsl(46 100% 94%); --accent-foreground: hsl(40 90% 30%);
+    --sidebar-primary: hsl(46 100% 49%); --sidebar-primary-foreground: hsl(222 47% 11%); --sidebar-ring: hsl(46 100% 49%);
+    --sidebar-accent: hsl(46 100% 93%); --sidebar-accent-foreground: hsl(40 90% 30%); --chart-1: hsl(46 100% 49%);
+    --primary-10: hsl(46 100% 49% / 0.1); --primary-12: hsl(46 100% 49% / 0.12); --primary-35: hsl(46 100% 49% / 0.35);
+}
+.dark[data-accent='yellow'] {
+    --primary: hsl(46 100% 55%); --primary-foreground: hsl(222 47% 11%); --ring: hsl(46 100% 55%);
+    --accent: hsl(43 45% 18%); --accent-foreground: hsl(46 95% 78%);
+    --sidebar-primary: hsl(46 100% 55%); --sidebar-primary-foreground: hsl(222 47% 11%); --sidebar-ring: hsl(46 100% 55%);
+    --sidebar-accent: hsl(43 45% 15%); --sidebar-accent-foreground: hsl(46 95% 78%); --chart-1: hsl(46 100% 55%);
+    --primary-10: hsl(46 100% 55% / 0.1); --primary-12: hsl(46 100% 55% / 0.12); --primary-35: hsl(46 100% 55% / 0.35);
+}
