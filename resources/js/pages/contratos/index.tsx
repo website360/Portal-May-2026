@@ -123,12 +123,13 @@ export default function Contratos({ contracts, filters, stats, clients, services
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-                    <Stat icon={FileText} label="Contratos" value={formatNumber(stats.total)} hint="Na base inteira" />
+                    <Stat icon={FileText} label="Contratos" value={formatNumber(stats.total)} hint="Na base inteira" tone="warning" />
                     <Stat
                         icon={CircleCheck}
                         label="Vigentes"
                         value={formatNumber(stats.active)}
                         hint="Assinados e dentro do prazo"
+                        tone="warning"
                         active={filters.statuses.includes('active')}
                         onClick={() => apply({ statuses: filters.statuses.includes('active') ? [] : ['active'] })}
                     />
