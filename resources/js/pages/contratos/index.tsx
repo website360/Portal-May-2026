@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { MultiSelect } from '@/components/ui/multi-select';
 import { SortableHeader, type SortDirection } from '@/components/ui/sortable-header';
 import AppLayout from '@/layouts/app-layout';
-import { formatCurrency, formatNumber } from '@/lib/format';
+import { formatMoney, formatNumber } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { type BreadcrumbItem, type Paginated } from '@/types';
 import { billingPeriodLabels, CONTRACT_FILTER_KEYS, statusOptions, type ClientOption, type Contract, type ContractFilters, type ContractStats } from '@/types/contracts';
@@ -300,7 +300,7 @@ export default function Contratos({ contracts, filters, stats, clients, services
                                                     {contract.value === null ? (
                                                         <span className="text-muted-foreground">—</span>
                                                     ) : (
-                                                        formatCurrency(contract.value)
+                                                        formatMoney(contract.value)
                                                     )}
                                                 </td>
 
