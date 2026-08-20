@@ -1,5 +1,7 @@
 import { ClientAvatar } from '@/components/clients/client-avatar';
+import { ContractRenewDialog } from '@/components/contracts/contract-renew-dialog';
 import { ContractSheet } from '@/components/contracts/contract-sheet';
+import { ContractTabs } from '@/components/contracts/contract-tabs';
 import { ContractStatusBadge } from '@/components/contracts/contract-status-badge';
 import { Pagination } from '@/components/pagination';
 import { Button } from '@/components/ui/button';
@@ -18,10 +20,12 @@ import { Head, Link, router } from '@inertiajs/react';
 import {
     AlertTriangle,
     Ban,
+    CalendarClock,
     CircleCheck,
     Download,
     Eye,
     FileClock,
+    FilePlus,
     FileSignature,
     FileText,
     MoreHorizontal,
@@ -50,6 +54,8 @@ interface ContratosPageProps {
 export default function Contratos({ contracts, filters, stats, clients, services }: ContratosPageProps) {
     const [search, setSearch] = useState(filters.search);
     const [editing, setEditing] = useState<Contract | null>(null);
+    const [creating, setCreating] = useState(false);
+    const [renewing, setRenewing] = useState<Contract | null>(null);
     const [deleting, setDeleting] = useState<Contract | null>(null);
     const [cancelling, setCancelling] = useState<Contract | null>(null);
     const firstRender = useRef(true);
@@ -101,17 +107,17 @@ export default function Contratos({ contracts, filters, stats, clients, services
 
             {/* min-w-0: sem isso a tabela larga estica o flex e empurra os cards para fora. */}
             <div className="animate-fade-in flex min-w-0 flex-1 flex-col gap-6 p-6">
+                <ContractTabs current="/contratos" />
+
                 <div className="flex flex-wrap items-start justify-between gap-4">
                     <div className="space-y-1">
                         <h1 className="text-2xl font-bold tracking-tight">Contratos</h1>
                         <p className="text-muted-foreground text-sm">O que cada cliente contratou, a vigência e o documento.</p>
                     </div>
 
-                    <Button asChild>
-                        <Link href={route('contratos.gerar')}>
-                            <Plus />
-                            Gerar contrato
-                        </Link>
+                    <Button variant="outline" onClick={() => setCreating(true)}>
+                        <FilePlus />
+                        Novo contrato
                     </Button>
                 </div>
 
@@ -330,6 +336,13 @@ export default function Contratos({ contracts, filters, stats, clients, services
                                                                     </DropdownMenuItem>
                                                                 )}
 
+                                                                {contract.ends_at && !contract.cancelled && contract.status !== 'draft' && (
+                                                                    <DropdownMenuItem onSelect={() => setRenewing(contract)}>
+                                                                        <CalendarClock className="size-4" />
+                                                                        Renovar
+                                                                    </DropdownMenuItem>
+                                                                )}
+
                                                                 <DropdownMenuSeparator />
 
                                                                 <DropdownMenuItem onSelect={() => setCancelling(contract)}>
@@ -360,7 +373,19 @@ export default function Contratos({ contracts, filters, stats, clients, services
                 </Card>
             </div>
 
-            <ContractSheet contract={editing} onOpenChange={() => setEditing(null)} clients={clients} />
+            <ContractSheet
+                open={editing !== null || creating}
+                contract={editing}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setEditing(null);
+                        setCreating(false);
+                    }
+                }}
+                clients={clients}
+            />
+
+            <ContractRenewDialog contract={renewing} onClose={() => setRenewing(null)} />
 
             <ConfirmDialog
                 open={cancelling !== null}

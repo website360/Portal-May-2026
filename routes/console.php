@@ -19,3 +19,11 @@ Artisan::command('inspire', function () {
 Schedule::command('financeiro:gerar-recorrencias --dias=30')
     ->dailyAt('03:00')
     ->withoutOverlapping();
+
+/*
+ * Avisa a agência dos contratos a vencer nos marcos de 30/15/7/1 dia. De manhã,
+ * para o aviso cair no começo do dia de trabalho de quem vai renovar.
+ */
+Schedule::command('contratos:avisar-vencimento')
+    ->dailyAt('08:00')
+    ->withoutOverlapping();

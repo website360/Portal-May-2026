@@ -12,7 +12,9 @@ import { Check, Download, FileText, Paperclip, Trash2, Upload } from 'lucide-rea
 import { useEffect, useRef, useState } from 'react';
 
 interface ContractSheetProps {
-    /** Nulo quando fechado; o contrato em edição quando aberto. */
+    /** Controla a abertura — criar e editar usam o mesmo painel. */
+    open: boolean;
+    /** Nulo = cadastrar um contrato novo; preenchido = editar esse contrato. */
     contract: Contract | null;
     onOpenChange: (open: boolean) => void;
     clients: ClientOption[];
@@ -32,41 +34,48 @@ interface FormData {
     [key: string]: string | File | null;
 }
 
-export function ContractSheet({ contract, onOpenChange, clients }: ContractSheetProps) {
+const EMPTY: FormData = {
+    client_id: '',
+    title: '',
+    service: '',
+    value: '',
+    starts_at: '',
+    ends_at: '',
+    signed_at: '',
+    notes: '',
+    pdf: null,
+};
+
+export function ContractSheet({ open, contract, onOpenChange, clients }: ContractSheetProps) {
     const [showText, setShowText] = useState(false);
     const fileInput = useRef<HTMLInputElement>(null);
 
-    const { data, setData, post, processing, errors, clearErrors } = useForm<FormData>({
-        client_id: '',
-        title: '',
-        service: '',
-        value: '',
-        starts_at: '',
-        ends_at: '',
-        signed_at: '',
-        notes: '',
-        pdf: null,
-    });
+    const { data, setData, post, processing, errors, clearErrors } = useForm<FormData>({ ...EMPTY });
 
     useEffect(() => {
-        if (!contract) return;
-
-        setData({
-            client_id: String(contract.client_id),
-            title: contract.title,
-            service: contract.service,
-            value: contract.value === null ? '' : numberToCurrency(contract.value),
-            starts_at: contract.starts_at,
-            ends_at: contract.ends_at ?? '',
-            signed_at: contract.signed_at ?? '',
-            notes: contract.notes ?? '',
-            pdf: null,
-        });
+        if (!open) return;
 
         clearErrors();
         setShowText(false);
+
+        // Sem contrato é cadastro novo: começa em branco. Com contrato, preenche.
+        setData(
+            contract
+                ? {
+                      client_id: String(contract.client_id),
+                      title: contract.title,
+                      service: contract.service,
+                      value: contract.value === null ? '' : numberToCurrency(contract.value),
+                      starts_at: contract.starts_at,
+                      ends_at: contract.ends_at ?? '',
+                      signed_at: contract.signed_at ?? '',
+                      notes: contract.notes ?? '',
+                      pdf: null,
+                  }
+                : { ...EMPTY },
+        );
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [contract?.id]);
+    }, [contract?.id, open]);
 
     function change<K extends keyof FormData>(field: K, value: FormData[K]) {
         clearErrors(field as string);
@@ -76,15 +85,24 @@ export function ContractSheet({ contract, onOpenChange, clients }: ContractSheet
     function submit(event: React.FormEvent) {
         event.preventDefault();
 
-        if (!contract) return;
+        if (contract) {
+            /*
+             * PUT com arquivo não chega: PHP não lê multipart em PUT. O jeito é
+             * POST com _method, que o Inertia converte quando forceFormData está
+             * ligado — e ele liga sozinho ao ver um File nos dados.
+             */
+            post(route('contratos.update', contract.id), {
+                method: 'put',
+                forceFormData: true,
+                preserveScroll: true,
+                onSuccess: () => onOpenChange(false),
+            });
 
-        /*
-         * PUT com arquivo não chega: PHP não lê multipart em PUT. O jeito é
-         * POST com _method, que o Inertia converte quando forceFormData está
-         * ligado — e ele liga sozinho ao ver um File nos dados.
-         */
-        post(route('contratos.update', contract.id), {
-            method: 'put',
+            return;
+        }
+
+        // Cadastro direto: sem documento, sem modelo — só os dados do acordo.
+        post(route('contratos.registrar'), {
             forceFormData: true,
             preserveScroll: true,
             onSuccess: () => onOpenChange(false),
@@ -92,13 +110,13 @@ export function ContractSheet({ contract, onOpenChange, clients }: ContractSheet
     }
 
     return (
-        <Sheet open={contract !== null} onOpenChange={onOpenChange}>
+        <Sheet open={open} onOpenChange={onOpenChange}>
             <SheetContent side="right" className="flex w-full flex-col gap-0 p-0 sm:max-w-lg">
                 <SheetHeader className="border-b p-6 text-left">
                     <div className="space-y-1.5 pr-8">
-                        <SheetTitle className="tabular">{contract?.number}</SheetTitle>
+                        <SheetTitle className="tabular">{contract ? contract.number : 'Novo contrato'}</SheetTitle>
                         <SheetDescription>
-                            {contract?.client.name} — {contract?.service}
+                            {contract ? `${contract.client.name} — ${contract.service}` : 'Cadastre um contrato que já vale, sem gerar documento.'}
                         </SheetDescription>
                     </div>
                 </SheetHeader>
@@ -141,19 +159,22 @@ export function ContractSheet({ contract, onOpenChange, clients }: ContractSheet
                             </Field>
                         </div>
 
-                        <Field
-                            label="Assinado em"
-                            error={errors.signed_at}
-                            hint="Preenchido, o contrato passa a valer e o texto deixa de ser regerado."
-                        >
-                            <Input
-                                id="signed_at"
-                                type="date"
-                                className="w-44"
-                                value={data.signed_at}
-                                onChange={(e) => change('signed_at', e.target.value)}
-                            />
-                        </Field>
+                        {/* Só na edição: um cadastro direto já vale pela data, sem assinatura. */}
+                        {contract && (
+                            <Field
+                                label="Assinado em"
+                                error={errors.signed_at}
+                                hint="Preenchido, o contrato passa a valer e o texto deixa de ser regerado."
+                            >
+                                <Input
+                                    id="signed_at"
+                                    type="date"
+                                    className="w-44"
+                                    value={data.signed_at}
+                                    onChange={(e) => change('signed_at', e.target.value)}
+                                />
+                            </Field>
+                        )}
 
                         {/* Anexo: é aqui que entra o contrato assinado e digitalizado. */}
                         <div className="grid gap-2">

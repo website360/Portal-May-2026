@@ -35,7 +35,7 @@ class Contract extends Model
         'client_id', 'contract_template_id', 'number', 'title', 'service',
         'value', 'starts_at', 'ends_at', 'body', 'variables', 'notes', 'signed_at',
         // Sem isto o cancelamento era gravado em silêncio e nada acontecia.
-        'cancelled_at', 'pdf_path',
+        'cancelled_at', 'pdf_path', 'active_without_signature',
     ];
 
     protected function casts(): array
@@ -47,6 +47,7 @@ class Contract extends Model
             'signed_at' => 'date',
             'cancelled_at' => 'datetime',
             'variables' => 'array',
+            'active_without_signature' => 'boolean',
         ];
     }
 
@@ -101,7 +102,10 @@ class Contract extends Model
 
         // Sem assinatura é rascunho, mesmo dentro da vigência: o que vale para
         // as duas partes é o papel assinado, não a data digitada aqui.
-        if ($this->signed_at === null) {
+        //
+        // Exceção: contratos cadastrados direto (sem gerar documento) valem pela
+        // data — não há papel a assinar, então a flag os tira do rascunho.
+        if ($this->signed_at === null && ! $this->active_without_signature) {
             return self::STATUS_DRAFT;
         }
 

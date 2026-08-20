@@ -1,3 +1,4 @@
+import { ContractTabs } from '@/components/contracts/contract-tabs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Combobox } from '@/components/ui/combobox';
@@ -11,7 +12,7 @@ import { cn } from '@/lib/utils';
 import { type BreadcrumbItem } from '@/types';
 import type { ClientOption, GeneratorTemplate } from '@/types/contracts';
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { ArrowLeft, Check, ExternalLink, Eye, FileText, RefreshCw, ScrollText } from 'lucide-react';
+import { Check, ExternalLink, Eye, FileText, RefreshCw, ScrollText } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -160,20 +161,13 @@ export default function Gerar({ templates, clients, nextNumber }: GerarPageProps
             <Head title="Gerar contrato" />
 
             <div className="animate-fade-in flex min-w-0 flex-1 flex-col gap-6 p-6">
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                    <div className="space-y-1">
-                        <h1 className="text-2xl font-bold tracking-tight">Gerar contrato</h1>
-                        <p className="text-muted-foreground text-sm">
-                            O serviço escolhido decide o texto. Será o contrato <span className="tabular font-medium">{nextNumber}</span>.
-                        </p>
-                    </div>
+                <ContractTabs current="/contratos/gerar" />
 
-                    <Button variant="outline" asChild>
-                        <Link href={route('contratos.index')}>
-                            <ArrowLeft />
-                            Contratos
-                        </Link>
-                    </Button>
+                <div className="space-y-1">
+                    <h1 className="text-2xl font-bold tracking-tight">Gerar contrato</h1>
+                    <p className="text-muted-foreground text-sm">
+                        O serviço escolhido decide o texto. Será o contrato <span className="tabular font-medium">{nextNumber}</span>.
+                    </p>
                 </div>
 
                 {templates.length === 0 ? (

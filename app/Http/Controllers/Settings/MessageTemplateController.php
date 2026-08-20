@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
 use App\Models\MessageTemplate;
+use App\Support\ContractExpiryAlert;
 use App\Support\MaintenanceReport;
 use App\Support\MessageComposer;
 use App\Support\MessageDelivery;
@@ -60,7 +61,10 @@ class MessageTemplateController extends Controller
             // Marcar "e-mail" num sistema sem servidor cadastrado não manda nada.
             'mail_ready' => Smtp::configured(),
             // O texto que sai hoje sem nenhum modelo: ponto de partida do editor.
-            'starters' => [MessageTriggers::MAINTENANCE_DONE => MaintenanceReport::defaultBody()],
+            'starters' => [
+                MessageTriggers::MAINTENANCE_DONE => MaintenanceReport::defaultBody(),
+                MessageTriggers::CONTRACT_EXPIRING => ContractExpiryAlert::defaultBody(),
+            ],
         ]);
     }
 

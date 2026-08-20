@@ -7,12 +7,15 @@ Route::prefix('contratos')->name('contratos.')->group(function () {
     Route::get('/', [ContractController::class, 'index'])->name('index');
     Route::get('gerar', [ContractController::class, 'create'])->name('gerar');
     Route::post('/', [ContractController::class, 'store'])->name('store');
+    // Cadastro direto de um contrato já existente, sem gerar documento.
+    Route::post('registrar', [ContractController::class, 'register'])->name('registrar');
     /*
      * GET porque prévia é leitura: não grava nada, dispensa CSRF, e não exige
      * permissão de escrita — que o EnsureModuleAccess cobraria de um POST.
      */
     Route::get('previa', [ContractController::class, 'preview'])->name('previa');
 
+    Route::post('{contrato}/renovacao', [ContractController::class, 'renew'])->name('renovacao');
     Route::put('{contrato}', [ContractController::class, 'update'])->name('update');
     Route::get('{contrato}/pdf', [ContractController::class, 'pdf'])->name('pdf');
     Route::post('{contrato}/assinatura', [ContractController::class, 'sign'])->name('assinatura');

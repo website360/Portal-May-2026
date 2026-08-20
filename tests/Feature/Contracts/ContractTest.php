@@ -7,6 +7,7 @@ use App\Models\Contract;
 use App\Models\ContractTemplate;
 use App\Models\User;
 use App\Support\ContractDocument;
+use App\Support\ContractExpiryAlert;
 use App\Support\ContractMarkup;
 use App\Support\ContractPlaceholders;
 use App\Support\ContractTypography;
@@ -798,5 +799,155 @@ class ContractTest extends TestCase
             ->assertSessionHasErrors('permissao');
 
         $this->assertSame(0, Contract::count());
+    }
+
+    // ── Cadastro direto (sem gerar documento) ────────────────────────────────
+
+    public function test_a_contract_is_registered_without_a_document(): void
+    {
+        $cliente = Client::factory()->create();
+
+        $this->post(self::URL.'/registrar', [
+            'client_id' => $cliente->id,
+            'title' => 'Hospedagem anual',
+            'service' => 'Hospedagem',
+            'value' => 1200,
+            'starts_at' => '2026-01-01',
+            'ends_at' => '2026-12-31',
+        ])->assertRedirect(self::URL)->assertSessionHasNoErrors();
+
+        $contrato = Contract::firstOrFail();
+
+        $this->assertSame($cliente->id, $contrato->client_id);
+        $this->assertNull($contrato->contract_template_id);
+        $this->assertNull($contrato->body);
+        $this->assertTrue($contrato->active_without_signature);
+    }
+
+    /** Cadastrado direto vale pela data, mesmo sem assinatura — não é rascunho. */
+    public function test_a_registered_contract_is_active_without_a_signature(): void
+    {
+        $contrato = Contract::factory()->create([
+            'signed_at' => null,
+            'active_without_signature' => true,
+            'ends_at' => Carbon::today()->addMonths(6),
+        ]);
+
+        $this->assertSame(Contract::STATUS_ACTIVE, $contrato->status());
+    }
+
+    /** A regra antiga segue de pé para os gerados: sem assinatura, é rascunho. */
+    public function test_a_generated_contract_without_signature_is_still_a_draft(): void
+    {
+        $contrato = Contract::factory()->create([
+            'signed_at' => null,
+            'active_without_signature' => false,
+        ]);
+
+        $this->assertSame(Contract::STATUS_DRAFT, $contrato->status());
+    }
+
+    public function test_read_only_cannot_register(): void
+    {
+        $cliente = Client::factory()->create();
+
+        $this->actingAs(User::factory()->member()->create(['permissions' => ['contratos' => 'read']]))
+            ->post(self::URL.'/registrar', [
+                'client_id' => $cliente->id,
+                'title' => 'Teste',
+                'service' => 'Serviço',
+                'starts_at' => '2026-08-01',
+            ])
+            ->assertSessionHasErrors('permissao');
+
+        $this->assertSame(0, Contract::count());
+    }
+
+    // ── Renovação ────────────────────────────────────────────────────────────
+
+    /** Renovar estende a data de fim do mesmo contrato — não cria outro. */
+    public function test_renewing_extends_the_same_contract(): void
+    {
+        $contrato = Contract::factory()->endingIn(-1)->create(['value' => 1000]);
+        $novoFim = Carbon::today()->addYear()->toDateString();
+
+        $this->post(self::URL."/{$contrato->id}/renovacao", ['ends_at' => $novoFim])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame(1, Contract::count());
+        $this->assertSame($novoFim, $contrato->refresh()->ends_at->toDateString());
+        $this->assertSame(Contract::STATUS_ACTIVE, $contrato->status());
+    }
+
+    /** Um valor novo na renovação reajusta o contrato; sem ele, o valor fica. */
+    public function test_renewing_can_adjust_the_value(): void
+    {
+        $contrato = Contract::factory()->create(['value' => 1000]);
+
+        $this->post(self::URL."/{$contrato->id}/renovacao", [
+            'ends_at' => Carbon::today()->addYear()->toDateString(),
+            'value' => 1500,
+        ])->assertSessionHasNoErrors();
+
+        $this->assertSame('1500.00', $contrato->refresh()->value);
+    }
+
+    public function test_renewing_rejects_an_end_before_the_start(): void
+    {
+        $contrato = Contract::factory()->create(['starts_at' => '2026-01-01']);
+
+        $this->post(self::URL."/{$contrato->id}/renovacao", ['ends_at' => '2025-12-31'])
+            ->assertSessionHasErrors('ends_at');
+    }
+
+    public function test_read_only_cannot_renew(): void
+    {
+        $contrato = Contract::factory()->create();
+
+        $this->actingAs(User::factory()->member()->create(['permissions' => ['contratos' => 'read']]))
+            ->post(self::URL."/{$contrato->id}/renovacao", ['ends_at' => Carbon::today()->addYear()->toDateString()])
+            ->assertSessionHasErrors('permissao');
+    }
+
+    // ── Alerta de vencimento ─────────────────────────────────────────────────
+
+    public function test_the_alert_describes_the_contract_for_the_agency(): void
+    {
+        $cliente = Client::factory()->create(['name' => 'Padaria Pão Quente']);
+        $contrato = Contract::factory()->create([
+            'client_id' => $cliente->id,
+            'number' => '0007',
+            'service' => 'Hospedagem',
+            'value' => 1200,
+            'ends_at' => Carbon::today()->addDays(30),
+        ]);
+
+        $vars = (new ContractExpiryAlert($contrato))->variables();
+
+        $this->assertSame('Padaria Pão Quente', $vars['cliente.nome']);
+        $this->assertSame('0007', $vars['contrato.numero']);
+        $this->assertSame('R$ 1.200,00', $vars['contrato.valor']);
+        $this->assertSame('30', $vars['contrato.dias']);
+    }
+
+    /** Dispara nos marcos (aqui, 7 dias antes). */
+    public function test_the_command_alerts_a_contract_at_a_milestone(): void
+    {
+        $contrato = Contract::factory()->create(['ends_at' => Carbon::today()->addDays(7)]);
+
+        $this->artisan('contratos:avisar-vencimento --dry-run')
+            ->expectsOutputToContain($contrato->number)
+            ->assertSuccessful();
+    }
+
+    /** Fora dos marcos (10 dias) não avisa. */
+    public function test_the_command_ignores_contracts_off_the_milestones(): void
+    {
+        Contract::factory()->create(['ends_at' => Carbon::today()->addDays(10)]);
+
+        $this->artisan('contratos:avisar-vencimento --dry-run')
+            ->expectsOutputToContain('Nenhum contrato em marco')
+            ->assertSuccessful();
     }
 }

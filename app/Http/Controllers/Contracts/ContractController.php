@@ -164,6 +164,58 @@ class ContractController extends Controller
         return to_route('contratos.index')->with('success', "Contrato {$contract->number} gerado.");
     }
 
+    /**
+     * Cadastra um contrato já existente, sem gerar documento.
+     *
+     * É o registro de um acordo que já vale no mundo — cliente, vigência,
+     * serviço e valor. Não há modelo nem texto: por isso `active_without_signature`,
+     * que o tira do rascunho (ver Contract::status()).
+     */
+    public function register(ContractRequest $request): RedirectResponse
+    {
+        $contract = new Contract($request->validated());
+        $contract->number = Contract::nextNumber();
+        $contract->active_without_signature = true;
+        $contract->save();
+
+        if ($request->hasFile('pdf')) {
+            $contract->update(['pdf_path' => $request->file('pdf')->store('contratos', 'public')]);
+        }
+
+        return to_route('contratos.index')->with('success', "Contrato {$contract->number} cadastrado.");
+    }
+
+    /**
+     * Renova o contrato estendendo a vigência do mesmo registro.
+     *
+     * Não cria um contrato novo: muda a data de fim (e o valor, se veio um novo)
+     * e deixa o status se recalcular — o que estava "a renovar" ou "encerrado"
+     * volta a vigorar.
+     */
+    public function renew(Request $request, Contract $contrato): RedirectResponse
+    {
+        $data = $request->validate([
+            'ends_at' => ['required', 'date', 'after_or_equal:'.$contrato->starts_at->toDateString()],
+            'value' => ['nullable', 'numeric', 'min:0', 'max:99999999'],
+        ], [
+            'ends_at.required' => 'Informe a nova data de fim.',
+            'ends_at.after_or_equal' => 'A nova data de fim não pode ser antes do início do contrato.',
+        ], [
+            'ends_at' => 'nova data de fim',
+            'value' => 'valor',
+        ]);
+
+        $contrato->ends_at = $data['ends_at'];
+
+        if (($data['value'] ?? null) !== null) {
+            $contrato->value = $data['value'];
+        }
+
+        $contrato->save();
+
+        return back()->with('success', "Contrato {$contrato->number} renovado até {$contrato->ends_at->format('d/m/Y')}.");
+    }
+
     public function update(ContractRequest $request, Contract $contrato): RedirectResponse
     {
         $data = $request->validated();

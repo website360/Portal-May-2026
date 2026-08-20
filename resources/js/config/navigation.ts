@@ -40,9 +40,24 @@ export function visibleNavigation(permissions: Record<ModuleKey, PermissionLevel
     return navigation.filter((item) => permissions?.[item.module] && permissions[item.module] !== 'none');
 }
 
-/** Um item esta ativo na rota exata ou em qualquer sub-rota dele. */
-export function isActiveRoute(href: string, currentUrl: string): boolean {
+/**
+ * Entre os itens, qual href casa melhor com a URL atual — so um acende.
+ *
+ * Um item casa na rota exata ou em qualquer sub-rota dele. Quando mais de um casa
+ * (ex.: /contratos e /contratos/gerar quando a URL e /contratos/gerar), vence o
+ * mais especifico, o de href mais longo. Retorna null quando nenhum casa.
+ */
+export function activeNavHref(items: NavLink[], currentUrl: string): string | null {
     const path = currentUrl.split('?')[0];
 
-    return path === href || path.startsWith(`${href}/`);
+    let best: string | null = null;
+    for (const item of items) {
+        if (path === item.href || path.startsWith(`${item.href}/`)) {
+            if (best === null || item.href.length > best.length) {
+                best = item.href;
+            }
+        }
+    }
+
+    return best;
 }
