@@ -94,13 +94,13 @@ export function ContractSheet({ open, contract, onOpenChange, clients }: Contrac
 
         if (contract) {
             /*
-             * put() com forceFormData: o Inertia envia POST com _method=PUT, que
-             * é o jeito de mandar arquivo num PUT (o PHP não lê multipart em PUT).
-             * Antes usávamos post({ method: 'put' }), mas o post ignora o method e
-             * ia um POST puro — que a rota (só PUT) recusa com 405.
+             * Multipart só quando há PDF: com arquivo, o Inertia manda POST com
+             * _method=PUT (o PHP não lê multipart num PUT de verdade). Sem arquivo,
+             * um PUT em JSON, que o Laravel lê em qualquer método — senão os campos
+             * chegariam vazios e a validação acusaria "obrigatório" com a tela cheia.
              */
             put(route('contratos.update', contract.id), {
-                forceFormData: true,
+                forceFormData: data.pdf !== null,
                 preserveScroll: true,
                 onSuccess: () => onOpenChange(false),
             });
