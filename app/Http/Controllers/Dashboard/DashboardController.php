@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Dashboard;
 use App\Http\Controllers\Controller;
 use App\Models\Activity;
 use App\Models\Client;
+use App\Models\Contract;
 use App\Models\Domain;
 use App\Models\Project;
 use App\Models\Recurrence;
@@ -25,7 +26,41 @@ class DashboardController extends Controller
             'activities' => $this->activities(),
             'domainAlerts' => $this->domainAlerts(),
             'endingRecurrences' => $this->endingRecurrences(),
+            'priceReviews' => $this->priceReviews(),
         ]);
+    }
+
+    /**
+     * Contratos na hora do reajuste bianual — dentro da janela de 30 dias ou já
+     * vencidos. Daqui sai o aviso ao cliente antes de aplicar o novo valor.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function priceReviews(): array
+    {
+        return Contract::query()
+            ->with('client:id,name,trade_name')
+            ->whereNotNull('price_review_at')
+            ->whereNull('cancelled_at')
+            ->whereDate('price_review_at', '<=', today()->addDays(Contract::REVIEW_WINDOW_DAYS))
+            ->orderBy('price_review_at')
+            ->get()
+            ->filter(fn (Contract $contract) => $contract->reviewDue())
+            ->take(6)
+            ->map(fn (Contract $contract) => [
+                'id' => $contract->id,
+                'number' => $contract->number,
+                'service' => $contract->service,
+                'client' => $contract->client?->display_name ?? 'Sem cliente',
+                'value' => $contract->value === null ? null : (float) $contract->value,
+                'price_review_label' => $contract->price_review_at?->format('d/m/Y'),
+                'review_days' => $contract->daysToReview(),
+                'review_notified' => $contract->reviewNotified(),
+                'review_notified_label' => $contract->price_review_notified_at?->format('d/m/Y'),
+                'price_review_new_value' => $contract->price_review_new_value === null ? null : (float) $contract->price_review_new_value,
+            ])
+            ->values()
+            ->all();
     }
 
     /**

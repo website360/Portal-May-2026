@@ -7,6 +7,7 @@ import { Pagination } from '@/components/pagination';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { PriceReviewNoticeButton } from '@/components/contracts/price-review-notice-button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { MultiSelect } from '@/components/ui/multi-select';
@@ -326,6 +327,8 @@ export default function Contratos({ contracts, filters, stats, clients, services
 
                                                 <td className="py-3 pr-6 pl-4">
                                                     <div className="flex items-center justify-end gap-1">
+                                                        {contract.review_due && !contract.cancelled && <PriceReviewNoticeButton contract={contract} />}
+
                                                         {(contract.has_attachment || contract.has_body) && (
                                                             <Button variant="ghost" size="icon-sm" aria-label="Baixar PDF" asChild>
                                                                 <a href={route('contratos.pdf', contract.id)}>

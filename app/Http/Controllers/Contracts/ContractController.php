@@ -9,6 +9,7 @@ use App\Models\Contract;
 use App\Models\ContractTemplate;
 use App\Support\ContractDocument;
 use App\Support\ContractPlaceholders;
+use App\Support\ContractPriceReviewNotice;
 use App\Support\ListSorting;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\RedirectResponse;
@@ -228,6 +229,37 @@ class ContractController extends Controller
         $contrato->save();
 
         return back()->with('success', "Contrato {$contrato->number} renovado até {$contrato->ends_at->format('d/m/Y')}.");
+    }
+
+    /**
+     * Avisa o cliente do reajuste por e-mail, com o novo valor, e registra que
+     * foi avisado. Não aplica o reajuste — isso é o passo seguinte, à mão.
+     */
+    public function notifyPriceReview(Request $request, Contract $contrato): RedirectResponse
+    {
+        $data = $request->validate([
+            'new_value' => ['required', 'numeric', 'min:0.01', 'max:99999999'],
+        ], [
+            'new_value.required' => 'Informe o novo valor.',
+            'new_value.min' => 'O novo valor precisa ser maior que zero.',
+        ], [
+            'new_value' => 'novo valor',
+        ]);
+
+        $novoValor = (float) $data['new_value'];
+
+        $resultado = (new ContractPriceReviewNotice($contrato->loadMissing('client'), $novoValor))->send();
+
+        if (! $resultado['ok']) {
+            return back()->with('error', $resultado['message']);
+        }
+
+        $contrato->forceFill([
+            'price_review_notified_at' => now(),
+            'price_review_new_value' => $novoValor,
+        ])->save();
+
+        return back()->with('success', "Cliente avisado do reajuste do contrato {$contrato->number}.");
     }
 
     public function update(ContractRequest $request, Contract $contrato): RedirectResponse
@@ -462,6 +494,9 @@ class ContractController extends Controller
             'price_review_years' => $contract->price_review_years,
             'review_days' => $contract->daysToReview(),
             'review_due' => $contract->reviewDue(),
+            'review_notified' => $contract->reviewNotified(),
+            'review_notified_label' => $contract->price_review_notified_at?->format('d/m/Y'),
+            'price_review_new_value' => $contract->price_review_new_value === null ? null : (float) $contract->price_review_new_value,
             'renewals' => $contract->renewals ?? [],
             'signed_at' => $contract->signed_at?->format('Y-m-d'),
             'signed_label' => $contract->signed_at?->format('d/m/Y'),

@@ -95,6 +95,34 @@ final class Smtp
     }
 
     /**
+     * Manda um e-mail em HTML — irmão do send() de texto puro.
+     *
+     * Existe para os avisos que ganham um layout: o de reajuste, por exemplo,
+     * onde o valor antigo e o novo pedem uma tabela, não uma linha corrida.
+     * Mesmo contrato do send(): nunca lança, o motivo volta na resposta.
+     *
+     * @return array{ok: bool, message: string}
+     */
+    public static function sendHtml(string $to, string $subject, string $html): array
+    {
+        if (! self::configured()) {
+            return ['ok' => false, 'message' => 'O e-mail não está configurado. Preencha em Configurações › E-mail.'];
+        }
+
+        if (! filter_var($to, FILTER_VALIDATE_EMAIL)) {
+            return ['ok' => false, 'message' => "Endereço de e-mail inválido: {$to}."];
+        }
+
+        try {
+            Mail::html($html, fn ($message) => $message->to($to)->subject($subject));
+        } catch (Throwable $e) {
+            return ['ok' => false, 'message' => 'O servidor de e-mail recusou: '.$e->getMessage()];
+        }
+
+        return ['ok' => true, 'message' => 'E-mail enviado.'];
+    }
+
+    /**
      * Dá para mandar e-mail agora?
      *
      * Em desenvolvimento o .env aponta para o log, e mandar funciona sem

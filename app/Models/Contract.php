@@ -50,6 +50,7 @@ class Contract extends Model
         // Sem isto o cancelamento era gravado em silêncio e nada acontecia.
         'cancelled_at', 'pdf_path', 'active_without_signature',
         'billing_period', 'price_review_at', 'price_review_years', 'renewals',
+        'price_review_notified_at', 'price_review_new_value',
     ];
 
     protected function casts(): array
@@ -64,6 +65,8 @@ class Contract extends Model
             'active_without_signature' => 'boolean',
             'price_review_at' => 'date',
             'price_review_years' => 'integer',
+            'price_review_notified_at' => 'datetime',
+            'price_review_new_value' => 'decimal:2',
             'renewals' => 'array',
         ];
     }
@@ -145,6 +148,12 @@ class Contract extends Model
         $days = $this->daysToReview();
 
         return $days !== null && $days <= self::REVIEW_WINDOW_DAYS && $this->cancelled_at === null;
+    }
+
+    /** O cliente já foi avisado deste reajuste? */
+    public function reviewNotified(): bool
+    {
+        return $this->price_review_notified_at !== null;
     }
 
     public function status(): string

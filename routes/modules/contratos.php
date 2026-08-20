@@ -16,6 +16,8 @@ Route::prefix('contratos')->name('contratos.')->group(function () {
     Route::get('previa', [ContractController::class, 'preview'])->name('previa');
 
     Route::post('{contrato}/renovacao', [ContractController::class, 'renew'])->name('renovacao');
+    // Avisa o cliente do reajuste (e-mail) antes de aplicá-lo.
+    Route::post('{contrato}/reajuste/aviso', [ContractController::class, 'notifyPriceReview'])->name('reajuste.aviso');
     Route::put('{contrato}', [ContractController::class, 'update'])->name('update');
     Route::get('{contrato}/pdf', [ContractController::class, 'pdf'])->name('pdf');
     Route::post('{contrato}/assinatura', [ContractController::class, 'sign'])->name('assinatura');

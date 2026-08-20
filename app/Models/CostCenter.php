@@ -13,7 +13,7 @@ class CostCenter extends Model
     use HasFactory;
 
     /** Paleta fechada, para os centros ficarem distinguíveis sem sair da identidade. */
-    public const COLORS = ['blue', 'green', 'amber', 'red', 'sky', 'violet'];
+    public const COLORS = ['blue', 'green', 'amber', 'red', 'sky', 'violet', 'gray'];
 
     protected $fillable = ['name', 'description', 'color', 'active'];
 

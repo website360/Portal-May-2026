@@ -27,6 +27,8 @@ final class MessageTriggers
 
     public const CONTRACT_PRICE_REVIEW = 'contrato.reajuste';
 
+    public const CONTRACT_PRICE_REVIEW_NOTICE = 'contrato.reajuste.aviso';
+
     public const TICKET_ASSIGNED = 'ticket.atribuido';
 
     /**
@@ -125,6 +127,29 @@ final class MessageTriggers
             'fields' => [
                 ['key' => 'dias', 'label' => 'Dias até o reajuste', 'type' => 'number'],
                 ['key' => 'valor', 'label' => 'Valor atual', 'type' => 'number'],
+                ['key' => 'cliente', 'label' => 'Nome do cliente', 'type' => 'text'],
+                ['key' => 'servico', 'label' => 'Serviço', 'type' => 'text'],
+            ],
+        ],
+        self::CONTRACT_PRICE_REVIEW_NOTICE => [
+            'label' => 'Aviso de reajuste ao cliente',
+            'module' => 'contratos',
+            'description' => 'Enviado ao cliente para avisar do reajuste antes de aplicá-lo — pelo botão em Contratos ou no Dashboard. Sai por e-mail, em HTML. Configure os destinatários como "O cliente".',
+            'variables' => [
+                ['key' => 'cliente.nome', 'label' => 'Nome do cliente', 'example' => 'Padaria Pão Quente Ltda'],
+                ['key' => 'cliente.contato', 'label' => 'Pessoa de contato', 'example' => 'Maria Souza'],
+                ['key' => 'cliente.primeiro_nome', 'label' => 'Primeiro nome do contato', 'example' => 'Maria'],
+                ['key' => 'contrato.numero', 'label' => 'Número do contrato', 'example' => '0007'],
+                ['key' => 'contrato.servico', 'label' => 'Serviço', 'example' => 'Hospedagem anual'],
+                ['key' => 'contrato.valor', 'label' => 'Valor atual', 'example' => 'R$ 1.200,00'],
+                ['key' => 'contrato.valor_novo', 'label' => 'Novo valor', 'example' => 'R$ 1.320,00'],
+                ['key' => 'contrato.aumento', 'label' => 'Aumento (%)', 'example' => '10%'],
+                ['key' => 'contrato.reajuste', 'label' => 'Data do reajuste', 'example' => '01/01/2028'],
+                ['key' => 'agencia.nome', 'label' => 'Nome da agência', 'example' => 'Agência May'],
+            ],
+            'fields' => [
+                ['key' => 'valor', 'label' => 'Valor atual', 'type' => 'number'],
+                ['key' => 'valor_novo', 'label' => 'Novo valor', 'type' => 'number'],
                 ['key' => 'cliente', 'label' => 'Nome do cliente', 'type' => 'text'],
                 ['key' => 'servico', 'label' => 'Serviço', 'type' => 'text'],
             ],

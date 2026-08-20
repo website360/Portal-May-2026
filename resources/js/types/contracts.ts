@@ -67,6 +67,11 @@ export interface Contract {
     /** Dias até o próximo reajuste; negativo quando já passou; null sem reajuste marcado. */
     review_days: number | null;
     review_due: boolean;
+    /** O cliente já foi avisado deste reajuste? */
+    review_notified: boolean;
+    review_notified_label: string | null;
+    /** O novo valor enviado no aviso — pré-preenche a renovação depois. */
+    price_review_new_value: number | null;
     renewals: ContractRenewal[];
     signed_at: string | null;
     signed_label: string | null;

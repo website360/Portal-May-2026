@@ -41,4 +41,5 @@ export interface DashboardProps {
     activities: ActivityItem[];
     domainAlerts: { total: number; items: DomainAlert[] };
     endingRecurrences: import('@/components/dashboard/ending-recurrences').EndingRecurrence[];
+    priceReviews: import('@/components/dashboard/price-reviews').PriceReview[];
 }

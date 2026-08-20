@@ -166,6 +166,7 @@ export const paletteColors: Record<string, { label: string; dot: string; chip: s
     red: { label: 'Vermelho', dot: 'bg-destructive', chip: 'border-destructive/20 bg-destructive/10 text-destructive' },
     sky: { label: 'Celeste', dot: 'bg-chart-2', chip: 'border-chart-2/20 bg-chart-2/10 text-chart-2' },
     violet: { label: 'Violeta', dot: 'bg-chart-5', chip: 'border-chart-5/20 bg-chart-5/10 text-chart-5' },
+    gray: { label: 'Cinza', dot: 'bg-muted-foreground', chip: 'border-muted-foreground/20 bg-muted-foreground/10 text-muted-foreground' },
 };
 
 export function colorOf(color: string | null | undefined) {

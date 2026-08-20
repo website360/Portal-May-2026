@@ -1,6 +1,7 @@
 import { DomainAlerts } from '@/components/dashboard/domain-alerts';
 import { EndingRecurrences } from '@/components/dashboard/ending-recurrences';
 import { KpiCard } from '@/components/dashboard/kpi-card';
+import { PriceReviews } from '@/components/dashboard/price-reviews';
 import { RecentActivity } from '@/components/dashboard/recent-activity';
 import { RecentProjects } from '@/components/dashboard/recent-projects';
 import { RevenueChart } from '@/components/dashboard/revenue-chart';
@@ -13,7 +14,7 @@ import { ArrowRight } from 'lucide-react';
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Dashboard', href: '/dashboard' }];
 
-export default function Dashboard({ kpis, revenueSeries, recentProjects, activities, domainAlerts, endingRecurrences }: DashboardProps) {
+export default function Dashboard({ kpis, revenueSeries, recentProjects, activities, domainAlerts, endingRecurrences, priceReviews }: DashboardProps) {
     const { auth } = usePage<SharedData>().props;
     const firstName = auth.user.name.split(' ')[0];
 
@@ -55,6 +56,7 @@ export default function Dashboard({ kpis, revenueSeries, recentProjects, activit
                 <div className="grid gap-6 lg:grid-cols-2">
                     <DomainAlerts alerts={domainAlerts} />
                     <EndingRecurrences recurrences={endingRecurrences} />
+                    <PriceReviews reviews={priceReviews} />
                 </div>
             </div>
         </AppLayout>
