@@ -239,6 +239,9 @@ export function TransactionFormSheet({
                                 <div className="max-w-48">
                                     <CurrencyInput id="amount" value={data.amount} onChange={(value) => change('amount', value)} placeholder="0,00" />
                                 </div>
+                                {!isEditing && data.repeat === 'installments' && (
+                                    <p className="text-muted-foreground mt-1 text-xs">Valor total da dívida — será dividido nas parcelas.</p>
+                                )}
                             </Property>
 
                             <Property icon={CalendarDays} label="Vencimento" required error={errors.due_date}>
@@ -351,9 +354,7 @@ export function TransactionFormSheet({
                                                     value={data.installments}
                                                     onChange={(e) => change('installments', e.target.value)}
                                                 />
-                                                <span className="text-muted-foreground text-xs">
-                                                    Cria as {data.installments || 0} contas agora, mês a mês. A dívida toda já fica registrada.
-                                                </span>
+                                                <span className="text-muted-foreground text-xs">{installmentPreview(data.amount, data.installments)}</span>
                                             </div>
                                         </Property>
                                     )}
@@ -518,6 +519,32 @@ function Property({
             </div>
         </div>
     );
+}
+
+/**
+ * A prévia do rateio: o valor total vira N parcelas. Os centavos que sobram na
+ * divisão vão nas primeiras — a mesma conta do backend, para a tela não
+ * prometer um valor que não sai.
+ */
+function installmentPreview(amountStr: string, countStr: string): string {
+    const total = Number(amountStr) || 0;
+    const n = Number(countStr) || 0;
+    const brl = (value: number) => `R$ ${numberToCurrency(value)}`;
+
+    if (total <= 0 || n < 2) {
+        return 'Cria as contas mês a mês, com o valor total dividido entre elas.';
+    }
+
+    const totalCents = Math.round(total * 100);
+    const baseCents = Math.floor(totalCents / n);
+    const remainder = totalCents - baseCents * n;
+
+    if (remainder === 0) {
+        return `${n}x de ${brl(baseCents / 100)} — mês a mês, total ${brl(totalCents / 100)}.`;
+    }
+
+    const firstLabel = remainder === 1 ? 'a 1ª' : `as ${remainder} primeiras`;
+    return `${n}x — ${firstLabel} de ${brl((baseCents + 1) / 100)}, as demais de ${brl(baseCents / 100)} (total ${brl(totalCents / 100)}).`;
 }
 
 /** Nome de cada campo em português, para o resumo de erros dizer algo útil. */

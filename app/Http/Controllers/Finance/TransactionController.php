@@ -274,9 +274,21 @@ class TransactionController extends Controller
         $seriesId = (string) Str::uuid();
         $firstDue = Carbon::parse($data['due_date']);
 
+        /*
+         * O valor digitado é o total da dívida; cada parcela recebe uma fatia.
+         * A conta é em centavos para fechar exato — os que sobram na divisão
+         * (1000 / 3) vão nas primeiras parcelas, e a soma bate com o total.
+         */
+        $totalCents = (int) round(((float) $data['amount']) * 100);
+        $baseCents = intdiv($totalCents, $installments);
+        $remainderCents = $totalCents - ($baseCents * $installments);
+
         foreach (range(1, $installments) as $number) {
+            $cents = $baseCents + ($number <= $remainderCents ? 1 : 0);
+
             Transaction::create([
                 ...$data,
+                'amount' => $cents / 100,
                 'due_date' => $firstDue->copy()->addMonthsNoOverflow($number - 1),
                 'description' => "{$data['description']} ({$number}/{$installments})",
                 'series_id' => $seriesId,
