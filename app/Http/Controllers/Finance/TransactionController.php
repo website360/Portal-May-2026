@@ -519,12 +519,14 @@ class TransactionController extends Controller
             'payable' => [
                 'total' => $card($slice(Transaction::TYPE_PAYABLE)),
                 'paid' => $card($settled(Transaction::TYPE_PAYABLE), $settledSum),
+                'pending' => $card($slice(Transaction::TYPE_PAYABLE, Transaction::STATUS_PENDING)),
                 'overdue' => $card($slice(Transaction::TYPE_PAYABLE, Transaction::STATUS_OVERDUE)),
             ],
             'receivable' => [
                 'total' => $card($slice(Transaction::TYPE_RECEIVABLE)),
                 'paid' => $card($settled(Transaction::TYPE_RECEIVABLE), $settledSum),
-                'open' => $card($slice(Transaction::TYPE_RECEIVABLE, Transaction::STATUS_OPEN)),
+                'pending' => $card($slice(Transaction::TYPE_RECEIVABLE, Transaction::STATUS_PENDING)),
+                'overdue' => $card($slice(Transaction::TYPE_RECEIVABLE, Transaction::STATUS_OVERDUE)),
             ],
         ];
     }

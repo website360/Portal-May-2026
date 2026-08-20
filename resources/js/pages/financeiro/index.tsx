@@ -153,14 +153,70 @@ export default function Financeiro({
                         {period}
                     </p>
 
-                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                         {[
+                            // Entradas: previsto no mês, o que entrou, o que ainda vem e o que atrasou.
                             {
-                                label: 'A pagar',
+                                label: 'A entrar',
+                                card: summary.receivable.total,
+                                icon: ArrowUpRight,
+                                status: '',
+                                hint: 'Previsto no mês',
+                                type: 'receivable',
+                                tone: 'success' as const,
+                            },
+                            {
+                                label: 'Recebida',
+                                card: summary.receivable.paid,
+                                icon: CircleCheck,
+                                status: 'paid',
+                                hint: 'Já entrou',
+                                type: 'receivable',
+                                tone: 'success' as const,
+                            },
+                            {
+                                label: 'A receber',
+                                card: summary.receivable.pending,
+                                icon: Clock,
+                                status: 'pending',
+                                hint: 'A vencer',
+                                type: 'receivable',
+                                tone: 'success' as const,
+                            },
+                            {
+                                label: 'Atrasada',
+                                card: summary.receivable.overdue,
+                                icon: CircleAlert,
+                                status: 'overdue',
+                                hint: 'Venceu sem entrar',
+                                type: 'receivable',
+                                tone: 'warning' as const,
+                            },
+                            // Saídas: o mesmo, do outro lado.
+                            {
+                                label: 'A sair',
                                 card: summary.payable.total,
                                 icon: ArrowDownLeft,
                                 status: '',
-                                hint: 'Tudo do período',
+                                hint: 'Previsto no mês',
+                                type: 'payable',
+                                tone: 'destructive' as const,
+                            },
+                            {
+                                label: 'Paga',
+                                card: summary.payable.paid,
+                                icon: Banknote,
+                                status: 'paid',
+                                hint: 'Já saiu',
+                                type: 'payable',
+                                tone: 'destructive' as const,
+                            },
+                            {
+                                label: 'A pagar',
+                                card: summary.payable.pending,
+                                icon: Clock,
+                                status: 'pending',
+                                hint: 'A vencer',
                                 type: 'payable',
                                 tone: 'destructive' as const,
                             },
@@ -171,43 +227,7 @@ export default function Financeiro({
                                 status: 'overdue',
                                 hint: 'Venceu sem baixa',
                                 type: 'payable',
-                                tone: 'destructive' as const,
-                            },
-                            {
-                                label: 'Paga',
-                                card: summary.payable.paid,
-                                icon: Banknote,
-                                status: 'paid',
-                                hint: 'Já baixado',
-                                type: 'payable',
-                                tone: 'destructive' as const,
-                            },
-                            {
-                                label: 'A receber',
-                                card: summary.receivable.total,
-                                icon: ArrowUpRight,
-                                status: '',
-                                hint: 'Tudo do período',
-                                type: 'receivable',
-                                tone: 'success' as const,
-                            },
-                            {
-                                label: 'Em aberto',
-                                card: summary.receivable.open,
-                                icon: Clock,
-                                status: 'pending,overdue',
-                                hint: 'Ainda não entrou',
-                                type: 'receivable',
-                                tone: 'success' as const,
-                            },
-                            {
-                                label: 'Recebida',
-                                card: summary.receivable.paid,
-                                icon: CircleCheck,
-                                status: 'paid',
-                                hint: 'Já baixado',
-                                type: 'receivable',
-                                tone: 'success' as const,
+                                tone: 'warning' as const,
                             },
                         ].map((item) => (
                             <Stat
@@ -564,7 +584,7 @@ function Stat({
     active,
     onClick,
 }: StatCard & {
-    tone: 'destructive' | 'success';
+    tone: 'destructive' | 'success' | 'warning';
     active: boolean;
     onClick: () => void;
 }) {
@@ -577,7 +597,11 @@ function Stat({
                     <span
                         className={cn(
                             'flex size-7 shrink-0 items-center justify-center rounded-lg',
-                            tone === 'destructive' ? 'bg-destructive/10 text-destructive' : 'bg-success/10 text-success',
+                            tone === 'destructive'
+                                ? 'bg-destructive/10 text-destructive'
+                                : tone === 'warning'
+                                  ? 'bg-warning/10 text-warning'
+                                  : 'bg-success/10 text-success',
                         )}
                     >
                         <Icon className="size-4" />

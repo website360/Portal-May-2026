@@ -87,8 +87,8 @@ interface SummaryCard {
 export interface FinanceSummary {
     /** Vazio quando não há filtro de período. */
     month: string;
-    payable: { total: SummaryCard; paid: SummaryCard; overdue: SummaryCard };
-    receivable: { total: SummaryCard; paid: SummaryCard; open: SummaryCard };
+    payable: { total: SummaryCard; paid: SummaryCard; pending: SummaryCard; overdue: SummaryCard };
+    receivable: { total: SummaryCard; paid: SummaryCard; pending: SummaryCard; overdue: SummaryCard };
 }
 
 export interface FinanceFilters {
