@@ -56,7 +56,7 @@ export function ContractSheet({ open, contract, onOpenChange, clients }: Contrac
     const [showText, setShowText] = useState(false);
     const fileInput = useRef<HTMLInputElement>(null);
 
-    const { data, setData, post, processing, errors, clearErrors } = useForm<FormData>({ ...EMPTY });
+    const { data, setData, post, put, processing, errors, clearErrors } = useForm<FormData>({ ...EMPTY });
 
     useEffect(() => {
         if (!open) return;
@@ -94,12 +94,12 @@ export function ContractSheet({ open, contract, onOpenChange, clients }: Contrac
 
         if (contract) {
             /*
-             * PUT com arquivo não chega: PHP não lê multipart em PUT. O jeito é
-             * POST com _method, que o Inertia converte quando forceFormData está
-             * ligado — e ele liga sozinho ao ver um File nos dados.
+             * put() com forceFormData: o Inertia envia POST com _method=PUT, que
+             * é o jeito de mandar arquivo num PUT (o PHP não lê multipart em PUT).
+             * Antes usávamos post({ method: 'put' }), mas o post ignora o method e
+             * ia um POST puro — que a rota (só PUT) recusa com 405.
              */
-            post(route('contratos.update', contract.id), {
-                method: 'put',
+            put(route('contratos.update', contract.id), {
                 forceFormData: true,
                 preserveScroll: true,
                 onSuccess: () => onOpenChange(false),

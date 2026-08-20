@@ -137,7 +137,7 @@ export default function Contratos({ contracts, filters, stats, clients, services
                         label="A renovar"
                         value={formatNumber(stats.expiring)}
                         hint="Vencem em até 30 dias"
-                        tone={stats.expiring > 0 ? 'warning' : undefined}
+                        tone="warning"
                         active={filters.statuses.includes('expiring')}
                         onClick={() => apply({ statuses: filters.statuses.includes('expiring') ? [] : ['expiring'] })}
                     />
@@ -146,14 +146,14 @@ export default function Contratos({ contracts, filters, stats, clients, services
                         label="A reajustar"
                         value={formatNumber(stats.review)}
                         hint="Reajuste em até 30 dias"
-                        tone={stats.review > 0 ? 'warning' : undefined}
+                        tone="warning"
                     />
                     <Stat
                         icon={FileClock}
                         label="Sem assinatura"
                         value={formatNumber(stats.draft)}
                         hint="Gerados e não assinados"
-                        tone={stats.draft > 0 ? 'warning' : undefined}
+                        tone="warning"
                         active={filters.statuses.includes('draft')}
                         onClick={() => apply({ statuses: filters.statuses.includes('draft') ? [] : ['draft'] })}
                     />
