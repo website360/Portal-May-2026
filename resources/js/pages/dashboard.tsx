@@ -42,7 +42,7 @@ export default function Dashboard({ kpis, revenueSeries, recentProjects, activit
                     ))}
                 </div>
 
-                <div className="grid gap-6 lg:grid-cols-3">
+                <div className="grid items-stretch gap-6 lg:grid-cols-3">
                     <div className="lg:col-span-2">
                         <RevenueChart data={revenueSeries} />
                     </div>

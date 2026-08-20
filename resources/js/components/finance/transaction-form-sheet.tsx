@@ -84,6 +84,10 @@ export function TransactionFormSheet({
 
         setDefaults(values);
         reset();
+        // Zera qualquer transform pendente (ex.: o de excluir, que manda só o
+        // `scope`). Sem isto, o próximo envio ia estripado e o backend acusava
+        // "campos obrigatórios" com a tela preenchida.
+        transform((data) => data);
         setData(values);
         clearErrors();
         // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -111,11 +111,11 @@ export default function Financeiro({
                     </div>
 
                     <div className="flex items-start gap-2">
-                        <div className="flex flex-col items-start gap-1">
+                        <div className="flex flex-col items-center gap-1">
                             <ChargeAllButton />
                             <Link
                                 href={'/financeiro/cobrancas'}
-                                className="text-muted-foreground hover:text-foreground pl-0.5 text-xs underline-offset-2 hover:underline"
+                                className="text-muted-foreground hover:text-foreground text-xs underline-offset-2 hover:underline"
                             >
                                 Histórico de cobranças
                             </Link>
@@ -165,20 +165,20 @@ export default function Financeiro({
                                 tone: 'destructive' as const,
                             },
                             {
-                                label: 'Paga',
-                                card: summary.payable.paid,
-                                icon: Banknote,
-                                status: 'paid',
-                                hint: 'Já baixado',
-                                type: 'payable',
-                                tone: 'destructive' as const,
-                            },
-                            {
                                 label: 'Atrasada',
                                 card: summary.payable.overdue,
                                 icon: CircleAlert,
                                 status: 'overdue',
                                 hint: 'Venceu sem baixa',
+                                type: 'payable',
+                                tone: 'destructive' as const,
+                            },
+                            {
+                                label: 'Paga',
+                                card: summary.payable.paid,
+                                icon: Banknote,
+                                status: 'paid',
+                                hint: 'Já baixado',
                                 type: 'payable',
                                 tone: 'destructive' as const,
                             },
@@ -192,20 +192,20 @@ export default function Financeiro({
                                 tone: 'success' as const,
                             },
                             {
-                                label: 'Recebida',
-                                card: summary.receivable.paid,
-                                icon: CircleCheck,
-                                status: 'paid',
-                                hint: 'Já baixado',
-                                type: 'receivable',
-                                tone: 'success' as const,
-                            },
-                            {
                                 label: 'Em aberto',
                                 card: summary.receivable.open,
                                 icon: Clock,
                                 status: 'pending,overdue',
                                 hint: 'Ainda não entrou',
+                                type: 'receivable',
+                                tone: 'success' as const,
+                            },
+                            {
+                                label: 'Recebida',
+                                card: summary.receivable.paid,
+                                icon: CircleCheck,
+                                status: 'paid',
+                                hint: 'Já baixado',
                                 type: 'receivable',
                                 tone: 'success' as const,
                             },

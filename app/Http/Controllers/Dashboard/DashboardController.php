@@ -6,10 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Activity;
 use App\Models\Client;
 use App\Models\Domain;
-use App\Models\Invoice;
 use App\Models\Project;
 use App\Models\Recurrence;
 use App\Models\Task;
+use App\Models\Transaction;
 use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -108,15 +108,8 @@ class DashboardController extends Controller
             ->where('created_at', '<', $startOfMonth)
             ->count();
 
-        $revenue = (float) Invoice::whereBetween('issued_at', [
-            $startOfMonth,
-            $startOfMonth->copy()->endOfMonth(),
-        ])->sum('amount');
-
-        $revenueBefore = (float) Invoice::whereBetween('issued_at', [
-            $previousMonth,
-            $previousMonth->copy()->endOfMonth(),
-        ])->sum('amount');
+        $revenue = $this->received($startOfMonth, $startOfMonth->copy()->endOfMonth());
+        $revenueBefore = $this->received($previousMonth, $previousMonth->copy()->endOfMonth());
 
         // "Pendente" aqui é tudo que não foi concluído — inclui o que está em andamento.
         $pendingTasks = Task::query()->open()->count();
@@ -179,14 +172,28 @@ class DashboardController extends Controller
      *
      * @return list<array<string, mixed>>
      */
+    /** O que entrou de fato num período: recebíveis pagos, pelo valor pago. */
+    private function received(Carbon $from, Carbon $to): float
+    {
+        return (float) Transaction::query()
+            ->where('type', Transaction::TYPE_RECEIVABLE)
+            ->whereNotNull('paid_at')
+            ->whereBetween('paid_at', [$from, $to])
+            ->get(['amount', 'paid_amount'])
+            ->sum(fn (Transaction $t) => (float) ($t->paid_amount ?? $t->amount));
+    }
+
     private function revenueSeries(): array
     {
         $start = Carbon::now()->startOfMonth()->subMonths(11);
 
-        $totals = Invoice::where('issued_at', '>=', $start)
-            ->get(['amount', 'issued_at'])
-            ->groupBy(fn (Invoice $invoice) => $invoice->issued_at->format('Y-m'))
-            ->map(fn ($group) => (float) $group->sum('amount'));
+        $totals = Transaction::query()
+            ->where('type', Transaction::TYPE_RECEIVABLE)
+            ->whereNotNull('paid_at')
+            ->where('paid_at', '>=', $start)
+            ->get(['amount', 'paid_amount', 'paid_at'])
+            ->groupBy(fn (Transaction $t) => $t->paid_at->format('Y-m'))
+            ->map(fn ($group) => (float) $group->sum(fn (Transaction $t) => (float) ($t->paid_amount ?? $t->amount)));
 
         $series = [];
 

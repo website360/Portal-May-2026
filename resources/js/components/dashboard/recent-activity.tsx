@@ -3,7 +3,7 @@ import type { ActivityItem } from '@/types/dashboard';
 
 export function RecentActivity({ items }: { items: ActivityItem[] }) {
     return (
-        <Card className="flex flex-col">
+        <Card className="flex h-full flex-col">
             <CardHeader>
                 <CardTitle>Atividades recentes</CardTitle>
                 <CardDescription>O que a equipe fez por último</CardDescription>

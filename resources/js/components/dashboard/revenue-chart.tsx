@@ -26,7 +26,7 @@ export function RevenueChart({ data }: { data: RevenuePoint[] }) {
     const total = data.reduce((sum, point) => sum + point.revenue, 0);
 
     return (
-        <Card className="overflow-hidden">
+        <Card className="h-full overflow-hidden">
             <CardHeader className="gap-1">
                 <span className="text-muted-foreground text-sm font-medium">Faturamento — últimos 12 meses</span>
                 <span className="tabular text-3xl font-bold tracking-tight">{formatCurrency(total)}</span>
