@@ -54,7 +54,7 @@ export function AppSidebar() {
                 </div>
             </SidebarHeader>
 
-            <SidebarContent className="gap-3 py-2">
+            <SidebarContent className="gap-2 py-1.5">
                 <NavMain label="Geral" items={general} />
                 {system.length > 0 && <NavMain label="Sistema" items={system} />}
             </SidebarContent>

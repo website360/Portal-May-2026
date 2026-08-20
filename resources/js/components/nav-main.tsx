@@ -12,14 +12,14 @@ export function NavMain({ items, label }: { items: NavItem[]; label?: string }) 
     return (
         <SidebarGroup className="px-2 py-1">
             {label && <SidebarGroupLabel className="mb-1 text-[0.7rem] font-semibold tracking-wider uppercase">{label}</SidebarGroupLabel>}
-            <SidebarMenu className="gap-1.5">
+            <SidebarMenu className="gap-1">
                 {items.map((item) => (
                     <SidebarMenuItem key={item.href}>
                         <SidebarMenuButton
                             asChild
                             isActive={item.href === activeHref}
                             tooltip={item.title}
-                            className="h-10 gap-3 text-[0.9375rem] [&>svg]:size-5"
+                            className="h-9 gap-3 text-[0.9375rem] [&>svg]:size-[1.125rem]"
                         >
                             <Link href={item.href} prefetch>
                                 <item.icon />
