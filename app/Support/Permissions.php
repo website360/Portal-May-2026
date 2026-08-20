@@ -37,6 +37,7 @@ final class Permissions
         'manutencao' => 'Manutenção',
         'contratos' => 'Contratos',
         'financeiro' => 'Financeiro',
+        'tickets' => 'Tickets',
         'ferramentas' => 'Ferramentas',
         'configuracoes' => 'Configurações',
     ];

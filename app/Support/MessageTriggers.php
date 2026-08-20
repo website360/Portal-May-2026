@@ -27,6 +27,8 @@ final class MessageTriggers
 
     public const CONTRACT_PRICE_REVIEW = 'contrato.reajuste';
 
+    public const TICKET_ASSIGNED = 'ticket.atribuido';
+
     /**
      * @var array<string, array{
      *     label: string,
@@ -125,6 +127,26 @@ final class MessageTriggers
                 ['key' => 'valor', 'label' => 'Valor atual', 'type' => 'number'],
                 ['key' => 'cliente', 'label' => 'Nome do cliente', 'type' => 'text'],
                 ['key' => 'servico', 'label' => 'Serviço', 'type' => 'text'],
+            ],
+        ],
+        self::TICKET_ASSIGNED => [
+            'label' => 'Ticket atribuído',
+            'module' => 'tickets',
+            'description' => 'Avisa o responsável quando um ticket passa a ser dele. Configure os destinatários como "Quem executou".',
+            'variables' => [
+                ['key' => 'responsavel.nome', 'label' => 'Nome do responsável', 'example' => 'João Pereira'],
+                ['key' => 'responsavel.primeiro_nome', 'label' => 'Primeiro nome do responsável', 'example' => 'João'],
+                ['key' => 'ticket.numero', 'label' => 'Número do ticket', 'example' => 'T0007'],
+                ['key' => 'ticket.assunto', 'label' => 'Assunto', 'example' => 'Site fora do ar'],
+                ['key' => 'ticket.prioridade', 'label' => 'Prioridade', 'example' => 'Urgente'],
+                ['key' => 'ticket.categoria', 'label' => 'Categoria', 'example' => 'Suporte'],
+                ['key' => 'cliente.nome', 'label' => 'Cliente', 'example' => 'Padaria Pão Quente Ltda'],
+                ['key' => 'ticket.link', 'label' => 'Link do ticket', 'example' => 'https://portal.agenciamay.com.br/tickets/7'],
+                ['key' => 'agencia.nome', 'label' => 'Nome da agência', 'example' => 'Agência May'],
+            ],
+            'fields' => [
+                ['key' => 'prioridade', 'label' => 'Prioridade', 'type' => 'text'],
+                ['key' => 'tem_cliente', 'label' => 'Tem cliente vinculado', 'type' => 'boolean'],
             ],
         ],
     ];
