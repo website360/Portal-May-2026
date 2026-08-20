@@ -67,6 +67,21 @@ class Contract extends Model
         ];
     }
 
+    protected static function booted(): void
+    {
+        static::saving(function (Contract $contract): void {
+            // Sem título, o serviço serve de título — o formulário não pede mais.
+            if (blank($contract->title)) {
+                $contract->title = $contract->service;
+            }
+
+            // A data de reajuste é calculada, não digitada: início + a cadência (padrão 2 anos).
+            if ($contract->starts_at !== null) {
+                $contract->price_review_at = $contract->starts_at->copy()->addYears((int) ($contract->price_review_years ?: 2));
+            }
+        });
+    }
+
     /** @return BelongsTo<Client, $this> */
     public function client(): BelongsTo
     {

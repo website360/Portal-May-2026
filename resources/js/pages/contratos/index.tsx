@@ -236,11 +236,11 @@ export default function Contratos({ contracts, filters, stats, clients, services
                                 <table className="w-full text-sm">
                                     <thead>
                                         <tr className="bg-muted/40 text-muted-foreground border-y text-left text-xs font-medium tracking-wide uppercase">
-                                            <SortableHeader column="number" label="Número" className="pr-4 pl-6" {...sortProps} />
-                                            <SortableHeader column="client" label="Cliente" {...sortProps} />
+                                            <SortableHeader column="client" label="Cliente" className="pr-4 pl-6" {...sortProps} />
                                             <SortableHeader column="service" label="Serviço" {...sortProps} />
-                                            <SortableHeader column="value" label="Valor" align="right" {...sortProps} />
+                                            <SortableHeader column="number" label="Número" {...sortProps} />
                                             <SortableHeader column="ends_at" label="Vigência" {...sortProps} />
+                                            <SortableHeader column="value" label="Valor" align="right" {...sortProps} />
                                             <th className="px-4 py-2.5">Situação</th>
                                             <th className="w-24 py-2.5 pr-6 pl-4" />
                                         </tr>
@@ -254,19 +254,7 @@ export default function Contratos({ contracts, filters, stats, clients, services
                                                     contract.cancelled && 'opacity-60',
                                                 )}
                                             >
-                                                <td className="py-3 pr-4 pl-6">
-                                                    <div className="tabular flex items-center gap-1.5 font-medium">
-                                                        {contract.number}
-                                                        {contract.has_attachment && (
-                                                            <span title="Tem PDF anexado">
-                                                                <Paperclip className="text-muted-foreground size-3.5" />
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    <div className="text-muted-foreground truncate text-xs">{contract.title}</div>
-                                                </td>
-
-                                                <td className="max-w-56 px-4 py-3">
+                                                <td className="max-w-56 py-3 pr-4 pl-6">
                                                     <Link
                                                         href={route('clientes.show', contract.client.id)}
                                                         className="hover:text-primary flex items-center gap-2"
@@ -282,12 +270,15 @@ export default function Contratos({ contracts, filters, stats, clients, services
 
                                                 <td className="text-muted-foreground max-w-48 truncate px-4 py-3">{contract.service}</td>
 
-                                                <td className="tabular px-4 py-3 text-right">
-                                                    {contract.value === null ? (
-                                                        <span className="text-muted-foreground">—</span>
-                                                    ) : (
-                                                        formatCurrency(contract.value)
-                                                    )}
+                                                <td className="px-4 py-3">
+                                                    <div className="tabular flex items-center gap-1.5 font-medium">
+                                                        {contract.number}
+                                                        {contract.has_attachment && (
+                                                            <span title="Tem PDF anexado">
+                                                                <Paperclip className="text-muted-foreground size-3.5" />
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </td>
 
                                                 <td className="px-4 py-3">
@@ -301,6 +292,14 @@ export default function Contratos({ contracts, filters, stats, clients, services
                                                             <TrendingUp className="size-3" />
                                                             Reajustar{contract.price_review_label ? ` — ${contract.price_review_label}` : ''}
                                                         </div>
+                                                    )}
+                                                </td>
+
+                                                <td className="tabular px-4 py-3 text-right">
+                                                    {contract.value === null ? (
+                                                        <span className="text-muted-foreground">—</span>
+                                                    ) : (
+                                                        formatCurrency(contract.value)
                                                     )}
                                                 </td>
 

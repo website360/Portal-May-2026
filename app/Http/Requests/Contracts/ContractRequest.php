@@ -14,7 +14,7 @@ class ContractRequest extends FormRequest
         return [
             'client_id' => ['required', 'exists:clients,id'],
             'contract_template_id' => ['nullable', 'exists:contract_templates,id'],
-            'title' => ['required', 'string', 'max:180'],
+            'title' => ['nullable', 'string', 'max:180'],
             'service' => ['required', 'string', 'max:120'],
             'value' => ['nullable', 'numeric', 'min:0', 'max:99999999'],
             'starts_at' => ['required', 'date'],

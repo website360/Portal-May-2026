@@ -234,15 +234,6 @@ export default function Gerar({ templates, clients, nextNumber }: GerarPageProps
                                         />
                                     </Field>
 
-                                    <Field label="Título do contrato" required error={errors.title}>
-                                        <Input
-                                            id="title"
-                                            value={data.title}
-                                            onChange={(e) => change('title', e.target.value)}
-                                            placeholder="Contrato de prestação de serviços"
-                                        />
-                                    </Field>
-
                                     <div className="grid gap-4 sm:grid-cols-2">
                                         <Field label="Valor" error={errors.value}>
                                             <CurrencyInput id="value" value={data.value} onChange={(v) => change('value', v)} placeholder="0,00" />
