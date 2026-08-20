@@ -222,13 +222,21 @@ class DashboardController extends Controller
     {
         $start = Carbon::now()->startOfMonth()->subMonths(11);
 
-        $totals = Transaction::query()
-            ->where('type', Transaction::TYPE_RECEIVABLE)
+        $rows = Transaction::query()
+            ->whereIn('type', [Transaction::TYPE_RECEIVABLE, Transaction::TYPE_PAYABLE])
             ->whereNotNull('paid_at')
             ->where('paid_at', '>=', $start)
-            ->get(['amount', 'paid_amount', 'paid_at'])
+            ->get(['type', 'amount', 'paid_amount', 'paid_at']);
+
+        // Recebidas e pagas somam por mês da baixa (paid_at) — o que de fato
+        // entrou e saiu, e não o que estava previsto.
+        $sumByMonth = fn (string $type) => $rows
+            ->where('type', $type)
             ->groupBy(fn (Transaction $t) => $t->paid_at->format('Y-m'))
             ->map(fn ($group) => (float) $group->sum(fn (Transaction $t) => (float) ($t->paid_amount ?? $t->amount)));
+
+        $received = $sumByMonth(Transaction::TYPE_RECEIVABLE);
+        $paid = $sumByMonth(Transaction::TYPE_PAYABLE);
 
         $series = [];
 
@@ -239,7 +247,8 @@ class DashboardController extends Controller
             $series[] = [
                 'month' => $key,
                 'label' => ucfirst(str_replace('.', '', $month->translatedFormat('M'))),
-                'revenue' => round((float) $totals->get($key, 0.0), 2),
+                'received' => round((float) $received->get($key, 0.0), 2),
+                'paid' => round((float) $paid->get($key, 0.0), 2),
             ];
         }
 
